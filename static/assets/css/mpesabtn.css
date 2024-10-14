@@ -1,0 +1,134 @@
+
+/* ===============  Mpesa CSS   ======================= */
+
+.Mpesa-box { background-color: #169a54; }
+
+.mp-btn {
+  line-height: 50px;
+  height: 50px;
+  text-align: center;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 5px;
+
+}
+
+/* 
+========================
+      BUTTON THREE
+========================
+*/
+.mbtn-three {
+  color: #FFF;
+  transition: all 0.5s;
+  position: relative;
+}
+
+
+.Mpesa-Icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  background-color: tranparent;
+  transition: all 0.3s;
+}
+.Mpesa-Icon SVG {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+  
+.mp-btn.mbtn-three span {
+    font-size: 20px;
+    font-family: "Lato", sans-serif;
+    font-weight: bold;
+    animation: fade-in .5s ease-in-out infinite alternate;
+   
+}
+
+@keyframes fade-in {
+    from{
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+
+.mbtn-three::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  z-index: 1;
+  background-color: rgba(255,255,255,0.1);
+  transition: all 0.3s;
+}
+.mp-btn-three:hover::before {
+  opacity: 0 ;
+  transform: scale(0.5,0.5);
+}
+.mbtn-three::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  transition: all 0.3s;
+  border: 1px solid rgba(255,255,255,0.5);
+  transform: scale(1.2,1.2);
+}
+.mbtn-three:hover::after {
+  opacity: 1;
+  transform: scale(1,1);
+  background-color: rgba(6, 139, 17, 0.066);
+  border-radius: 5px;
+
+
+
+}
+
+
+#loader {
+  font-size: 18px;
+  font-weight: 700;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader {
+  border: 12px solid #f3f3f3;
+  border-top: 12px solid blueviolet;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

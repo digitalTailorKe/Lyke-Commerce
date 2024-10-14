@@ -1,0 +1,210 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+{% block content %}
+
+<head>
+    <style>
+        
+            .bottom-action {
+                position: relative; /* Position the container */
+            }
+
+            .bottom-action .compare-products {
+                border-radius: 5px;
+                border: 1px solid #BCE3C9;
+                background-color: #fff;
+                padding: 5px;
+                margin-right: 10px;
+                cursor: pointer;
+                position: relative;
+            }
+
+            
+            .bottom-action .compare-products:hover {
+                color: #FDC040;
+            }
+
+            .bottom-action .compare-products:after {
+                content: attr(data-content);
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #3BB77E;
+                color: white;
+                padding: 7px 10px;
+                border-radius: 5px;
+                font-size: 11px;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .bottom-action .compare-products:hover:after {
+                opacity: 1;
+                visibility: visible;
+                transform: translateX(-50%) translateY(-8px);
+            }
+
+            .bottom-action .compare-products:before {
+                content: '';
+                position: absolute;
+                left: 50%;
+                bottom: 100%;
+                border: 7px solid transparent;
+                border-top-color: #3BB77E;
+                transform: translateX(-50%);
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+
+            .bottom-action .compare-products:hover:before {
+                opacity: 1;
+                visibility: visible;
+                transform: translateX(-50%) translateY(-8px);
+            }
+        </style>
+    </head>
+
+  <main>
+    <section class="section-padding pb-5">
+        <div class="section-title">
+            <h3 class="">Deals Of The Day</h3>
+            <a class="show-all" href="{% url 'core:deals_of_the_day' %}">
+                All Deals
+                <i class="fi-rs-angle-right"></i>
+            </a>
+        </div>
+        <div class="row">
+            {% for deal in deals %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="product-cart-wrap style-2">
+                    <div class="product-img-action-wrap">
+                        <div class="product-img">
+                            <a href="{% url 'core:product-detail' deal.product.pid %}">
+                                <img src="{{ deal.product.image.url }}" alt="{{ deal.product.title }}" />
+                            </a>
+                        </div>
+                    </div>
+                    <div class="product-content-wrap">
+                        <div class="deals-countdown-wrap">
+                            <div class="deals-countdown" data-countdown="{{ deal.end_time| date:'Y/m/d H:i:s' }}"></div>
+                        </div>
+                        <div class="deals-content">
+                            <h2><a href="{% url 'core:product-detail' deal.product.pid %}">{{ deal.product.title }}</a></h2>
+                            <div class="product-rate-cover">
+                                <div class="product-rate d-inline-block">
+                                    <div class="product-rating" style="width: {{ deal.product.get_rating_percent }}%"></div>
+                                </div>
+                                <span class="font-small ml-5 text-muted"> ({{ deal.product.get_rating }})</span>
+                            </div>
+                            <div>
+                                <span class="font-small text-muted">By <a href="{% url 'core:vendor-detail' deal.product.vendor.id %}">{{ deal.product.vendor.title }}</a></span>
+                            </div>
+                            <div class="product-card-bottom">
+                                <div class="product-price">
+                                    <span>${{ deal.get_discounted_price }}</span>
+                                    <span class="old-price">${{ deal.product.price }}</span>
+                                </div>
+                                <div class="add-cart bottom-action">
+
+                                    <input type="hidden" value="1" id="product-quantity" class="product-quantity-{{ deal.product.id }}">
+                                    <input type="hidden" class="product-pid-{{ product.id }}" value="{{ deal.product.pid }}">
+                                    <input type="hidden" class="product-image-{{ product.id }}" value="{{ deal.product.image.url }}">
+                                    <input type="hidden" class="product-id-{{ product.id }}" value="{{ deal.product.id }}">
+                                    <input type="hidden" class="product-title-{{ product.id }}" value="{{ deal.product.title }}">
+                                                        
+                                    <button class="add add-to-cart-btn" data-index="{{ deal.product.id }}" style="border: none;" id="add-to-cart-btn">
+                                        {% if deal.product.id|stringformat:"s" in cart_data %}
+                                            <i class='fas fa-check-circle'></i>
+                                        {% else %}
+                                            <i class="fi-rs-shopping-cart mr-5"></i>Add
+                                        {% endif %}
+                                    </button>
+
+                                    <button style="border: none; background: none;" class="compare-products action-btn" 
+                                        data-product-item="{{deal.product.id}}" data-toggle="popover" data-content="Compare" data-placement="top">
+                                        {% if p.id in compared_items %}
+                                            <i class='fas fa-check-circle'></i>
+                                        {% else %}
+                                            <i class='fas fi-rs-refresh'></i>
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+  </main>
+
+
+   <script src="{% static 'assets/js/main.js' %}"></script>
+    <script src="{% static 'assets/js/shop.js' %}"></script>
+    <script src="{% static 'assets/js/function.js' %}"></script>
+    
+    <script>
+        $(".compare-products").on("click", function() {
+
+            let this_val = $(this); // Current button element
+            let index = this_val.attr("data-product-item"); // Get the product ID from data attribute
+            
+            console.log("Product ID for comparison:", index); // Log the product ID for debugging
+            
+            $.ajax({
+                url: `/compare/add/${index}`, // URL to send the comparison request
+                method: 'POST',
+                data: {
+                    'product_id': index,  // Product ID being added to compare
+                },
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django security
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    console.log("Adding product to compare list..."); // Optional: log message before request
+                },
+                success: function(response) {
+                    if (response.success) {
+                        console.log("Product added to compare list!"); // Log on success
+                        $(".compare_count").text(response.total_comparison_items)
+                        // Optionally, change the button UI to indicate success
+                        this_val.html("<i class='fas fa-check-circle'></i>");
+                        
+                        // Update the compare counter
+                        updateCompareCounter();
+                    }
+                }
+            });
+        });
+        
+        function updateCompareCounter() {
+            $.ajax({
+                url: '/compare/count/',  // URL to get the current compare count
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    // Update the compare counter with the new count
+                    $(".compare-counter").text(data.compare_count);
+                    console.log("Compare counter updated:", data.compare_count); // Log new count
+                }
+            });
+        }
+
+
+        $(document).ready(function(){
+            $('[data-toggle="popover"]').popover({
+                trigger: 'hover', // Popover shows on hover
+                html: true,       // If you want HTML content inside the popover
+            });
+        });
+        
+    </script>
+
+{% endblock %}

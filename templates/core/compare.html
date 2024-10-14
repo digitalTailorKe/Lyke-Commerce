@@ -1,0 +1,251 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+{% block content %}
+
+
+<head>
+    <style>
+        .add-to-cart-btn {
+            position: relative;
+            padding: 0px 20px;
+            border-radius: 5px;
+            border: 0;
+            height: 50px;
+            line-height: 50px;
+            font-weight: 700;
+            font-size: 16px;
+            font-family: "Quicksand", sans-serif;
+            background-color: #3BB77E;
+        }
+    </style>
+</head>
+
+<div class="comparison-container" style="padding: 20px;">
+    <h2 style="text-align: center; margin-bottom: 20px;">Product Comparison</h2>
+
+    {% if products %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead style="background-color: #f8f8f8; position: sticky; top: 0;">
+                <tr>
+                    <th style="padding: 10px; font-size: 16px; border-bottom: 2px solid #ddd;">Title</th>
+                    {% for product in products %}
+                    <th style="padding: 10px; font-size: 16px; border-bottom: 2px solid #ddd;">
+                        <div style="width: 100%">
+                            <h4>{{ product.title }}</h4>
+                            
+                        </div>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background-color: #f4f4f4;">
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Image</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        <img src="{{ product.image.url }}" alt="{{ product.title }}" style="width: 100px; height: 100px; object-fit: cover;">
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Price</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd; font-weight: bold; color: #333;">
+                        ${{ product.price }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: #f4f4f4;">
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Old Price</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        <span style="text-decoration: line-through; color: #888;">${{ product.old_price }}</span>
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Description</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        {{ product.description|safe }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: #f4f4f4;">
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Specifications</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        {{ product.specifications|safe }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Type</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        {{ product.type|safe }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: #f4f4f4;">
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Tags</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        {{ product.tags.all|join:", " }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">Life</td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        {{ product.life|safe }}
+                    </td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Add to Cart Buttons -->
+                <tr style="background-color: #f4f4f4;">
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;"></td>
+                    {% for product in products %}
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;">
+                        <!-- Add Hidden Inputs for Product Data -->
+                        <input type="hidden" value="1" id="product-quantity" class="product-quantity-{{ product.id }}">
+
+                        <input type="hidden" class="product-id-{{ product.id }}" value="{{ product.id }}">
+                        <input type="hidden" class="product-title-{{ product.id }}" value="{{ product.title }}">
+                        <input type="hidden" class="current-product-price-{{ product.id }}" value="{{ product.price }}">
+                        <input type="hidden" class="product-image-{{ product.id }}" value="{{ product.image.url }}">
+                        <input type="hidden" class="product-pid-{{ product.id }}" value="{{ product.pid }}">
+                
+                        <button class=" button-add-to-cart text-white add-to-cart-btn" data-index="{{ product.id }}" style="border: none;" id="add-to-cart-btn">
+                            <i class="fi-rs-shopping-cart mr-5"></i>Add to cart
+                        </button>
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: #f4f4f4;">
+                    <td style="padding: 15px; border-bottom: 1px solid #ddd;"></td>
+                    {% for product in products %}
+                     <td  style="padding: 15px; border-bottom: 1px solid #ddd;">
+
+                        <a style="background-color: #000; text-align: start; font-size: 16px; position: relative; border-radius: 5px; padding: 13px 20px; color: #fff; font-weight: 700; text-decoration: none;" href="{% url 'core:remove_from_comparison' product.id %}" class="remove-btn" title="Remove this product">
+                          <i class="fi-rs-trash mr-5"></i>Remove item
+                        </a>
+
+                      </td>
+                    {% endfor %}
+
+                
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; font-size: 18px; color: #888;">No products to compare.</p>
+    {% endif %}
+</div>
+
+<script>
+    $(document).on('click', '.remove-btn', function(e) {
+        e.preventDefault();  // Prevent the default action (i.e., page reload)
+    
+        let removeUrl = $(this).attr('href');  // Get the URL for removing the product
+    
+        $.ajax({
+            url: removeUrl,  // URL to send the remove request
+            method: 'POST',  // Use POST method
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for Django security
+            },
+            success: function(response) {
+                if (response.success) {
+                    refreshComparisonTable();  // Refresh the comparison table
+                    $(".compare-counter").text(response.total_comparison_items);  // Update counter
+                } else {
+                    alert("There was an error removing the product.");
+                }
+            },
+            error: function() {
+                alert("Failed to remove product. Please try again.");
+            }
+        });
+    });
+    
+    function refreshComparisonTable() {
+        // Reload the comparison table via AJAX
+        $.ajax({
+            url: "{% url 'core:compare_products' %}",  // URL for fetching the updated comparison table
+            method: 'GET',
+            success: function(response) {
+                // Update the entire comparison container
+                $('.comparison-container').html(response);
+                $(".compare-counter").text(response.total_comparison_items);  // Update counter
+                bindAddToCartEvents();  // Rebind Add to Cart events
+            },
+            error: function() {
+                alert("Failed to reload the comparison table.");
+            }
+        });
+    }
+
+    function bindAddToCartEvents() {
+        $(".add-to-cart-btn").on("click", function(){
+    
+            let this_val = $(this)
+            let index = this_val.attr("data-index")
+        
+            let quantity = $(".product-quantity-" + index).val()
+            let product_title = $(".product-title-" + index).val()
+        
+            let product_id = $(".product-id-" + index).val()
+            let product_price = $(".current-product-price-" + index).val()
+        
+            let product_pid = $(".product-pid-" + index).val()
+            let product_image = $(".product-image-" + index).val()
+        
+            let pricefloat = parseFloat(product_price)
+
+            console.log("Quantity:", quantity);
+            console.log("Title:", product_title);
+            console.log("Price:", pricefloat);
+            console.log("ID:", product_id);
+            console.log("PID:", product_pid);
+            console.log("Image:", product_image);
+            console.log("Index:", index);
+            console.log("Currrent Element:", this_val);
+        
+            $.ajax({
+                url: '/add-to-cart',
+                data: {
+                    'id': product_id,
+                    'pid': product_pid,
+                    'image': product_image,
+                    'qty': quantity,
+                    'title': product_title,
+                    'price': pricefloat,
+                },
+                dataType: 'json',
+                beforeSend: function(){
+                    console.log("Adding Product to Cart...");
+                },
+                success: function(response){
+                    // this_val.html("✓")
+                    this_val.html("<i class='fas fa-check-circle'></i>")
+    
+                    console.log("Added Product to Cart!");
+                    $(".cart-items-count").text(response.totalcartitems)
+        
+        
+                }
+            })
+        })
+    
+    }
+
+    // Initial binding of Add to Cart buttons
+    bindAddToCartEvents();
+
+</script>
+
+{% endblock %}

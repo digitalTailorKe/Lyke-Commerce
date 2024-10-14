@@ -1,0 +1,427 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="\static\assets\css\mpesabtn.css">
+<main class="main">
+    <div class="page-header breadcrumb-wrap">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="index.html" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
+                <span></span> Shop <span></span> Checkout
+            </div>
+        </div>
+    </div>
+    <div class="container mb-80 mt-50">
+        <div class="row">
+            <div class="col-lg-8 mb-40">
+                <h1 class="heading-2 mb-10">Checkout</h1>
+                <div class="d-flex justify-content-between"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="row">
+                    {% for o in order_items %}
+                        <div class="col-lg-6">
+                            <div class="card" style="max-width: 540px">
+                                <div class="row g-0">
+                                    <div class="col-sm-4">
+                                        <img src="{{o.image}}" style="width: 100%; height: 100%; object-fit: cover" class="rounded-start" alt="Card image" />
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{o.item}}</h5>
+                                            <p class="card-text fs-sm">Qty: {{o.qty}}</p>
+                                            <p class="card-text fs-sm">Price: ${{o.price}}</p>
+                                            <p class="card-text fs-sm">Total: ${{o.total}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="border cart-totals mb-50">
+                    <div class="d-flex align-items-end justify-content-between mb-30">
+                        <h4>Order Summary</h4>
+                    </div>
+
+                    <div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <p class="fw-bold">Tax</p>
+                            <p>$0.00</p>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <p class="fw-bold">Shipping</p>
+                            <p>$0.00</p>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <p class="fw-bold">Discount</p>
+                            <p>${{order.saved}}</p>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <p class="fw-bold">Total</p>
+                            <p>${{order.price}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-50">
+                    <div class="col-lg-12">
+                        <form method="POST" class="apply-coupon">
+                            {% csrf_token %}
+                            <input type="text" name="code" placeholder="Enter Coupon Code..." />
+                            <button class="btn btn-md" type="submit" name="login">Apply</button>
+                        </form>
+                    </div>
+                </div>
+                <!-- ===== Stipe Button ===== -->
+                <button id="checkout-button" class="btn w-100" style="background-color: blueviolet">Pay With Stripe (Credit or Debit Card)</button>
+                <!-- ===== Pay Pal Button ===== -->                
+                <div id="paypal-button-container" class="mt-3"></div>
+                    <!-- ===== Mpesa Button ===== -->                
+                                <div class="Mpesa-box">
+                                    <div class="Mpesa-box">
+                                        <form id="mpesaPaymentForm" name="mpesa_form" method="POST">
+                                            {% csrf_token %}
+                                            {{ mpesa_form.as_p }} <!-- M-Pesa Form Fields -->
+                                            
+                                            <!-- M-Pesa Submit Button (now submits the form directly) -->
+                                            <button type="submit" class="mp-btn mbtn-three" id="mpesa-btn">
+                                                <div class="Mpesa-Icon">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 1000 1000" style="enable-background:new 0 0 1000 1000;" xml:space="preserve">
+                                                    <style type="text/css">
+                                                        .st0{fill-rule:evenodd;clip-rule:evenodd;fill:#FFFFFF;}
+                                                        .st1{fill-rule:evenodd;clip-rule:evenodd;fill:#CCE86E;}
+                                                        .st2{fill-rule:evenodd;clip-rule:evenodd;fill:#447d02;}
+                                                        .st3{fill-rule:evenodd;clip-rule:evenodd;fill:#7F1D1E;}
+                                                        .st4{fill:none;stroke:#CD7F4B;stroke-width:17.1568;stroke-miterlimit:2.6131;}
+                                                        .st5{fill-rule:evenodd;clip-rule:evenodd;fill:#EC1D27;}
+                                                        .st6{fill:none;stroke:#CD7F4B;stroke-width:15.319;stroke-miterlimit:2.6131;}
+                                                    </style>
+                                                    <g id="g10" transform="matrix(1.3333333,0,0,-1.3333333,0,2699.3467)">
+                                                        <g id="g12" transform="scale(0.1)">
+                                                            <g id="g14" transform="scale(1.00829)">
+                                                                <path id="path16" class="st0" d="M2162.1,17488.9h554.7c176.4,0,320.8-144.3,320.8-320.8v-922.2c0-176.4-144.4-320.8-320.8-320.8     h-554.7c-176.4,0-320.8,144.4-320.8,320.8v922.2C1841.3,17344.5,1985.6,17488.9,2162.1,17488.9L2162.1,17488.9"/>
+                                                            </g>
+                                                            <g id="g18" transform="scale(1.24202)">
+                                                                <path id="path20" class="st1" d="M1755.2,14197.7h450.3c143.2,0,260.4-117.2,260.4-260.4v-748.7c0-143.2-117.2-260.4-260.4-260.4     h-450.3c-143.2,0-260.4,117.2-260.4,260.4v748.7C1494.8,14080.5,1612,14197.7,1755.2,14197.7z M2368.2,11810.7h-775.8     c-113.4,0-206.2,92.8-206.2,206.2v2273.1c0,113.4,92.8,206.2,206.2,206.2h775.8c9.2,0,18.2-0.6,27.1-1.8v167.3     c0,49.2,40.3,89.5,89.5,89.5l0,0c49.2,0,89.5-40.3,89.5-89.5v-282.1c0-12.5-2.6-24.4-7.3-35.3c4.8-17.3,7.3-35.5,7.3-54.2     v-2273.1C2574.4,11903.5,2481.6,11810.7,2368.2,11810.7L2368.2,11810.7"/>
+                                                            </g>
+                                                            <g id="g22" transform="scale(1.44826)">
+                                                                <path id="path24" class="st2" d="M2592.2,12029.1c104.8,15,185.3-14.1,190.7-179.1c-3.5-147.3-81.8-184.6-190.7-176.8V12029.1z      M2364.1,12135l424.6,1.6c154.8-19.7,226.3-135.5,219.8-304.1c-11.8-169.9-108.1-252.9-268.9-267.5l-154.1,3.1l4.3-466h-225.7     L2364.1,12135L2364.1,12135"/>
+                                                            </g>
+                                                            <g id="g26" transform="scale(1.78599)">
+                                                                <path id="path28" class="st2" d="M2759.4,9850.7l218,1l-1.6-93.6l-170.7,0.8c-98.5-18.3-76.5-123.4-81.2-199.3l229.7,4.3     l0.8-114.8l-222.5,2.4l-1.1-278.1c8.7-72.1,46.7-108.3,110.7-112.5l122.3,1.3l37.3-0.8l-1.2-86.8l-38.2-1.5l-232.4,2.5     c-80.1,2.7-144.7,42.4-174.5,165.9l-5.7,539.5C2552.3,9791.5,2625.3,9845.7,2759.4,9850.7L2759.4,9850.7"/>
+                                                            </g>
+                                                            <g id="g30" transform="scale(2.14255)">
+                                                                <path id="path32" class="st2" d="M2548.6,8014c-11.5,150.6,72.5,184.7,174.5,196.6c119.5,7.1,194.5-42.7,209.1-169.9l-141,0.4     c-8.9,64.1-58.8,88.8-104.4,58.2c-65.1-79.6,138-219.7,198.8-271.6c105.2-83.2,87.4-313.9-74.7-356.6l-98.8-3.5     c-100.4-2.4-160.1,61-177.4,178.6l142.1,2.5c7.7-50.2,29.2-81.4,74.6-79.2c70.8,13.4,90.2,75.7,39.9,155.2     C2686,7814.1,2561.3,7898.1,2548.6,8014L2548.6,8014"/>
+                                                            </g>
+                                                            <g id="g34" transform="scale(1.02577)">
+                                                                <path id="path36" class="st2" d="M105.4,17198.8h312l3.3-96.9c188.5,81.5,330.7,139,479.6,4.9     c266.3,125.7,467.6,111.4,567.4-121.9l13.9-1310.1H1167v1249.6c-23.3,107-108,125.3-210.2,118.2v-1367.8H634.9v1249.6     c-23.3,107-108,125.3-210.2,118.2v-1367.8H105.4V17198.8L105.4,17198.8"/>
+                                                            </g>
+                                                            <g id="g38" transform="scale(2.47715)">
+                                                                <path id="path40" class="st2" d="M2742.6,6985c4.4,35.6,16,49.9,55.1,53.7c39.7-1,53.8-23.9,56.4-59.2V6883h-111.5V6985z      M2608.7,6475h134v333.2h111.5V6475H2984v476c-2.6,96.7-77,157.4-182.3,157.8c-120.1,1.1-188.6-55.9-193.1-152.3L2608.7,6475     L2608.7,6475"/>
+                                                            </g>
+                                                            <path id="path42" class="st3" d="M2114.3,17004.7c55.3-129.4,130.6-188.9,221.9-192.6c-142.3-106.3-296.3-170.9-456.7-212.2    c-100.8,6.5-197.2,32.1-290.7,57.7C1825.1,16704.4,2001.4,16818.8,2114.3,17004.7L2114.3,17004.7"/>
+                                                            <path id="path44" class="st4" d="M2114.3,17004.7c55.3-129.4,130.6-188.9,221.9-192.6c-142.3-106.3-296.3-170.9-456.7-212.2    c-100.8,6.5-197.2,32.1-290.7,57.7C1825.1,16704.4,2001.4,16818.8,2114.3,17004.7L2114.3,17004.7z"/>
+                                                            <g id="g46" transform="scale(1.11997)">
+                                                                <path id="path48" class="st5" d="M2441.3,15481l595.6-300.8c-303.3-399.1-814.9-409.6-1359.7-358     C2041.5,14911.9,2293.6,15134.5,2441.3,15481L2441.3,15481"/>
+                                                            </g>
+                                                            <g id="g50" transform="scale(1.11997)">
+                                                                <path id="path52" class="st6" d="M2441.3,15481l595.6-300.8c-303.3-399.1-814.9-409.6-1359.7-358     C2041.5,14911.9,2293.6,15134.5,2441.3,15481z"/>
+                                                            </g>
+                                                        </g>
+                                                    </g>
+                                                    </svg></div>
+                                                <span>M-pesa</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                        <!-- ===== End Mpesa Button ===== -->  
+
+                        <!--  Mpesa loader -->
+
+                        <!-- Add Loader Element (initially hidden) -->
+                        <div id="loader" class="loader-container">
+                            <div class="loader"></div>
+                            <p id="countdown-text" style="font-size: 30px; font-weight: 700;">Checking payment status in <span id="countdown">30</span> seconds...</p>
+                        </div>
+                        <!--- modal -->
+
+                        <div class="modal fade" id="Mpesamodal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-bs-backdrop="static">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <!-- Modal Header -->
+                                    <div class="modal-header bg-success text-white">
+                                        <h5 class="modal-title" id="exampleModalCenterTitle">M-Pesa Payment</h5>
+                                        <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                        
+                                    <!-- Modal Body with Form -->
+                                    <div class="modal-body p-4">
+                                        <form id="mpesaPaymentForm" name="mpesa_form" >
+                                            {{ mpesa_form.as_p }}
+                                            
+                                            <!-- Submit Button -->
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-success btn-lg">Pay Now</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                        
+                                    <!-- Modal Footer -->
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+            </div>
+        </div> 
+    </div>
+</main>
+
+<script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+    $('#mpesa-btn').on('click', function(event) {
+        event.preventDefault();  // Prevent default button behavior
+        
+        // Submit the form via AJAX or perform a direct POST
+        $('#mpesaPaymentForm').submit();  // Submit the form programmatically
+        
+        // Redirect to the confirmation page
+        window.location.href = `/confirm-payment/{{ order.oid }}/`;
+    });
+</script>
+
+<!-- <script>
+    $('#mpesaPaymentForm').on('submit', function(event) {
+        event.preventDefault();  // Prevent default form submission
+        
+        $('#loader').css('display', 'flex'); 
+        
+        // Initialize variables
+        var CheckoutRequestID;  // Variable to store the checkout ID
+        var countdownValue = 30;  // 30 seconds countdown
+        var countdownInterval = setInterval(function() {
+            countdownValue--;
+            $('#countdown').text(countdownValue);
+            
+            if (countdownValue <= 0) {
+                clearInterval(countdownInterval);
+                queryMpesaStatus(CheckoutRequestID);
+            }
+        }, 1000);  // Countdown tick every 1 second
+    
+        // Convert form data to a JSON object
+        var formDataArray = $(this).serializeArray();  // Get form data as an array
+        var formData = {};
+        
+        // Convert array to JSON object
+        $.each(formDataArray, function(_, field) {
+            formData[field.name] = field.value;
+        });
+    
+        // Make the initial M-Pesa payment request
+        $.ajax({
+            url: "{% url 'core:lipa_na_mpesa_online' %}",
+            type: "POST",
+            data: JSON.stringify(formData),
+            contentType: "application/json",
+            dataType: "json",
+            success: function(response) {
+                if (response) {  // Correctly accessing CheckoutRequestID    
+                    CheckoutRequestID = response.CheckoutRequestID; // Store the CheckoutRequestID
+                      // For debugging purposes
+                } else {
+                    console.error('CheckoutRequestID is missing in the response.');
+                }
+    
+                if (response.message) {
+                    alert(response.message);
+                } else if (response.error) {
+                    alert('Error: ' + response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#loader').hide();  // Hide loader on error
+                clearInterval(countdownInterval);  // Stop countdown
+                alert('An error occurred: ' + error);
+            }
+        });
+    });
+    
+    // Function to query M-Pesa status after countdown ends
+    function queryMpesaStatus(CheckoutRequestID) {
+        if (!CheckoutRequestID) {
+            alert('Checkout ID is missing. Transaction status cannot complete.');
+            $('#loader').hide();  // Hide loader
+            return;
+        }
+    
+        $.ajax({
+            url: "{% url 'core:query_mpesa_payment' %}",
+            type: "POST",  // Assuming it's a POST request to pass JSON data
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify({ CheckoutRequestID }),  // Pass the checkout ID
+            success: function(response) {
+                
+                if (response.result_code == 0) {
+                    // If payment is successful, redirect to the payment completed page
+                    window.location.href = `/payment-completed/{{ order.oid }}/`;
+                } else {
+                    // If result_code is not 0, prompt the user to retry the payment
+                    alert('Payment failed. Please try again.\n\nMessage: ' + response.message);
+
+                    window.location.href = `/confirm-payment/{{ order.oid }}/`;
+                }
+                $('#loader').hide();  // Hide loader when status is received
+            },
+            error: function(xhr, status, error) {
+                $('#loader').hide();  // Hide loader on error
+                alert('An error occurred while checking payment status: ' + error);
+                alert('Please try again: ' + error);
+
+            }
+        });
+    }
+</script>  -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("Order Price:", "{{ order.price }}");
+        console.log("Order OID:", "{{ order.oid }}");
+
+        paypal.Buttons({
+            createOrder: function (data, actions) {
+                return actions.order.create({
+                    purchase_units: [
+                        {
+                            amount: {
+                                value: "{{ order.price }}",
+                            },
+                        },
+                    ],
+                });
+            },
+
+            onApprove: function (data, actions) {
+                return actions.order.capture().then(function (Detail) {
+                    console.log(Detail);
+                    if (Detail.status === "COMPLETED") {
+                        // Success page redirect
+                        window.location.href = `/payment-completed/{{ order.oid }}/?status=${Detail.status}`;
+                    }
+                });
+            },
+        }).render("#paypal-button-container");
+    });
+</script>
+
+<!-- <script>
+    paypal.Buttons({
+            createOrder: function (data, actions) {
+                return actions.order.create({
+                    purchase_units: [
+                        {
+                            amount: {
+                                value: "{{order.price}}",
+                            },
+                        },
+                    ],
+                });
+            },
+
+            onApprove: function (data, actions) {
+                return actions.order.capture().then(function (Detail) {
+                    console.log(Detail);
+                    if (Detail.status === "COMPLETED") {
+                    // Success page redirect
+                        window.location.href = `/payment-completed/{{order.oid}}/?status=${Detail.status}`;
+                    }
+                });
+            },
+        })
+        .render("#paypal-button-container");
+</script> -->
+
+<!-- stripe js -->
+
+<script>
+    var stripe = Stripe("{{stripe_publishable_key}}");
+    var checkoutButton = document.getElementById("checkout-button");
+
+    checkoutButton.addEventListener("click", function () {
+        var email = "{{order.email}}";
+
+        checkoutButton.innerHTML = "Processing <i class='fas fa-spinner fa-spin'></i>";
+
+        fetch("/api/create_checkout_session/{{order.oid}}/", {
+            method: "POST",
+            body: JSON.stringify({ email: email }),
+        })
+            .then(function (response) {
+                console.log(response);
+                console.log(stripe);
+                return response.json();
+            })
+            .then(function (session) {
+                return stripe.redirectToCheckout({ sessionId: session.sessionId });
+            })
+            .then(function (result) {
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            })
+            .catch(function (error) {
+                console.log("Error: ", error);
+            });
+    });
+</script>
+
+<!-- Completed code for paypal payment -->
+
+<!-- Completed code for paypal payment -->
+
+<!-- <script>
+    var stripe = Stripe("{{stripe_publishable_key}}");
+    var checkoutButton = document.getElementById("checkout-button");
+
+    checkoutButton.addEventListener("click", function () {
+        var email = "{{booking.email}}";
+
+        checkoutButton.innerHTML = "Processing <i class='fas fa-spinner fa-spin'></i>";
+
+        fetch("/api/create_checkout_session/{{booking.booking_id}}/", {
+            method: "POST",
+            body: JSON.stringify({ email: email }),
+        })
+            .then(function (response) {
+                console.log(response);
+                console.log(stripe);
+                return response.json();
+            })
+            .then(function (session) {
+                return stripe.redirectToCheckout({ sessionId: session.sessionId });
+            })
+            .then(function (result) {
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            })
+            .catch(function (error) {
+                console.log("Error: ", error);
+            });
+    });
+</script> -->
+
+{% endblock content %}
+    

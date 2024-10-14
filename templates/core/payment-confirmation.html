@@ -1,0 +1,198 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row">
+        <!-- Left Column: Order Summary -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Order Summary</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>Order number:</strong> {{ cart_order.oid }}</li>
+                        <li><strong>Date:</strong> {{ cart_order.order_date|date:"F d, Y" }}</li>
+                        <li><strong>Total:</strong> KSh {{ cart_order.price }}</li>
+                        <li><strong>Payment method:</strong> Mpesa Express</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Updated HTML with hidden M-Pesa form -->
+                <p>Thank you for your order, please <a href="#" id="showMpesaForm">click here</a> to pay with MPESA.</p>
+
+                <!-- Hidden M-Pesa Form -->
+                <div id="mpesaFormContainer" class="gap-2 align-items-center" style="display: none;">
+                    <form id="mpesaPaymentForm" name="mpesa_form" method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Hidden fields to include necessary data without displaying form -->
+                        <input type="hidden" name="order_id" value="{{ mpesa_form.order_id.value }}">
+                        <input type="hidden" name="amount" value="{{ mpesa_form.amount.value }}">
+                        <input name="phone_number" style="margin: 10px;" value="{{ mpesa_form.phone_number.value }}">
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" id="payNowButton" style="margin: 10px;" class="btn btn-success btn-lg">Pay Now</button>
+                        </div>
+                    </form>
+
+
+                <!-- Countdown Display beside the button -->
+                <div id="countdownDisplay" class="text-muted ms-2"></div>
+                
+                <button type="button"  style="margin: 10px;" class="btn btn-dark btn-lg">Cancel Order & Restore Cart</button>
+            </div>
+        </div>
+
+        <!-- Right Column: Payment Instructions -->
+        <div class="col-md-6">
+            <div id="paymentSuccessAlert" class="d-none" style="background-color: #3BB77E; border: 1px solid #29A56C;">
+                Your order has been paid successfully!
+            </div>
+
+             <div id="paymentErrorAlert" class="d-none" style="background-color: #FFF8DC; border: 1px solid #FFD700;">
+                <div class="d-flex align-items-start">
+                    <div class="me-3">
+                        <span style="font-size: 24px;">⚠️</span>
+                    </div>
+                    <div>
+                        <p>If you are having an issue sending payment requests to your phone. Please follow the instructions below to make a payment:</p>
+                        <ol>
+                            <li>Go to Safaricom SIM Tool Kit, select M-PESA menu, select "Lipa na M-PESA".</li>
+                            <li>Select "Pay Bill".</li>
+                            <li>Enter Paybill No. <strong>4029469</strong>.</li>
+                            <li>Enter account no as <strong>{{ cart_order.oid }}</strong>.</li>
+                            <li>Enter amount as <strong>{{ cart_order.price }}</strong>.</li>
+                            <li>Enter your M-PESA PIN and press "OK".</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button type="button" class="btn btn-success btn-lg">Complete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function() {
+        // Initially hide the M-Pesa form container
+        $('#mpesaFormContainer').hide();
+
+        // When the "click here" link is clicked, show the M-Pesa form
+        $('#showMpesaForm').on('click', function(event) {
+            event.preventDefault();  // Prevent the default anchor behavior
+            $('#mpesaFormContainer').slideDown();  // Use slideDown animation to show the form
+        });
+    });
+
+    $(document).ready(function() {
+        var CheckoutRequestID; // Variable to store CheckoutRequestID from the response
+        $('#paymentErrorAlert').removeClass('d-none');
+
+        $('#mpesaPaymentForm').on('submit', function(event) {
+            
+            event.preventDefault(); 
+            $('#paymentErrorAlert').addClass('d-none');
+
+            
+            // Disable the "Pay Now" button and change its text to indicate waiting state
+            var $payNowButton = $('#payNowButton');
+            $payNowButton.prop('disabled', true).text('Processing Payment...');
+            
+            // Convert form data to a JSON object
+            var formDataArray = $(this).serializeArray();  // Get form data as an array
+            var formData = {};
+            
+            // Convert array to JSON object
+            $.each(formDataArray, function(_, field) {
+                formData[field.name] = field.value;
+            });
+
+            // Make the M-Pesa payment request
+            $.ajax({
+                url: "{% url 'core:lipa_na_mpesa_online' %}",
+                type: "POST",
+                data: JSON.stringify(formData),
+                contentType: "application/json",
+                dataType: "json",
+                success: function(response) {
+                    if (response.CheckoutRequestID) {
+                        CheckoutRequestID = response.CheckoutRequestID;  // Store CheckoutRequestID for the query
+                        
+                        // Start a 30-second timer before querying payment status
+                        var countdown = 30;
+                        var $countdownDisplay = $('#countdownDisplay');  // Reference to the countdown display element
+                        $countdownDisplay.text('Time remaining: ' + countdown + 's');  // Initial text
+                        
+                        var timerInterval = setInterval(function() {
+                            countdown--;
+                            $countdownDisplay.text('Time remaining: ' + countdown + 's');
+                            
+                            if (countdown <= 0) {
+                                clearInterval(timerInterval);  // Stop the timer
+                                queryMpesaStatus(CheckoutRequestID);  // Call the query function
+                                $countdownDisplay.text('');  // Clear the countdown display
+                            }
+                        }, 1000);
+                        
+                    } else {
+                        $('#paymentErrorAlert').removeClass('d-none');  // Show error message
+                        $payNowButton.prop('disabled', false).text('Pay Now');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#paymentErrorAlert').removeClass('d-none');  // Show error message
+                    $payNowButton.prop('disabled', false).text('Pay Now');  // Reset the button
+                    $('#countdownDisplay').text('');  // Clear countdown on error
+                }
+            });
+        });
+        
+        // Function to query M-Pesa status after 30 seconds
+        function queryMpesaStatus(CheckoutRequestID) {
+            var $payNowButton = $('#payNowButton');
+            $payNowButton.prop('disabled', true).text('Processing Payment...');
+
+            if (!CheckoutRequestID) {
+                alert('Checkout ID is missing. Transaction status cannot complete.');
+                $('#paymentErrorAlert').removeClass('d-none');
+                return;
+            }
+
+            $.ajax({
+                url: "{% url 'core:query_mpesa_payment' %}",
+                type: "POST",
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify({ CheckoutRequestID }),  // Pass the checkout ID
+                success: function(response) {
+                    if (response.result_code == 0) {
+                        $('#paymentSuccessAlert').removeClass('d-none');
+                        $payNowButton.prop('disabled', false).text('Pay Now');
+
+                        // If payment is successful, redirect to the payment completed page
+                        window.location.href = `/payment-completed/{{ cart_order.oid }}/`;
+                    } else {
+                        // If result_code is not 0, show an error and reset the button
+                        alert('Payment failed. Please try again.\n\nMessage: ' + response.message);
+                        $('#paymentErrorAlert').removeClass('d-none');
+                        
+
+                        $payNowButton.prop('disabled', false).text('Pay Now');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#paymentErrorAlert').removeClass('d-none');  // Show error message
+                    $payNowButton.prop('disabled', false).text('Pay Now');  // Reset the button on error
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock content %}

@@ -1,0 +1,112 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+{% block content %}
+    <main class="main pages">
+        <div class="page-header breadcrumb-wrap">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="{% url 'core:index' %}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
+                    <span></span> Pages <span></span> Track Order
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-content pt-150 pb-150">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-10 m-auto">
+            
+                        <div class="card mt-5">
+                            <div class="card-header">
+                                <h3 class="mb-0">Track Your Order</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>To track your order, please enter your Order ID and billing email below and press "Track". This was provided to you in your order confirmation email.</p>
+                                
+                                <!-- Order Tracking Form -->
+                                <form class="mt-30 mb-50" action="{% url 'core:track-order' %}" method="post">
+                                    {% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-lg-6 mb-3">
+                                            <label for="order-id">Order ID</label>
+                                            <input name="order_id" id="order-id" placeholder="Found in your order confirmation email" type="text" class="form-control" required/>
+                                        </div>
+                                        <div class="col-lg-6 mb-3">
+                                            <label for="billing-email">Billing Email</label>
+                                            <input name="billing_email" id="billing-email" placeholder="Email you used during checkout" type="email" class="form-control" required/>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary" type="submit">Track</button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Render tracking details if available -->
+                        {% if order %}
+                        <div class="card mt-5">
+                            <div class="card-header">
+                                <h3 class="mb-0">Order Tracking Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Order ID:</strong> {{ order.oid }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Order Date:</strong> {{ order.order_date|date:"Y-m-d" }}
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Shipping Method:</strong> {{ order.shipping_method|default:"Standard" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Tracking ID:</strong> {{ order.tracking_id|default:"Not available" }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Total Price:</strong> ${{ order.price }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Paid Status:</strong> 
+                                        {% if order.paid_status %}
+                                            <span class="text-success">Paid</span>
+                                        {% else %}
+                                            <span class="text-danger">Not Paid</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <hr>
+                                
+                                <h4 class="mt-4">Order Status</h4>
+                                <div class="tracking-path">
+                                    <div class="path-line {{ order.product_status|lower }}"></div>
+                                    <div class="status-item {{ order.product_status|lower }}">
+                                        <div class="circle {{ order.product_status|lower }} {% if order.product_status == 'processing' or order.product_status == 'shipped' or order.product_status == 'delivered' %}active{% endif %}">1</div>
+                                        <p>Processing</p>
+                                    </div>
+                                    <div class="status-item {{ order.product_status|lower }}">
+                                        <div class="circle {{ order.product_status|lower }} {% if order.product_status == 'shipped' or order.product_status == 'delivered' %}active{% endif %}">2</div>
+                                        <p>Shipped</p>
+                                    </div>
+                                    <div class="status-item {{ order.product_status|lower }}">
+                                        <div class="circle {{ order.product_status|lower }} {% if order.product_status == 'delivered' %}active{% endif %}">3</div>
+                                        <p>Delivered</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif error %}
+                        <div class="alert alert-danger mt-4">
+                            {{ error }}
+                        </div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock content %}

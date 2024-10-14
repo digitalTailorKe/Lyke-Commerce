@@ -1,0 +1,131 @@
+
+
+{% extends 'partials/base.html' %}
+{% load static %}
+{% block content %}
+
+
+<style>
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 16px;
+        text-align: left;
+    }
+    
+    .table th, .table td {
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+    }
+    
+    .table thead th {
+        background-color: #f8f8f8;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    .table tbody td {
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    .table img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 3px;
+    }
+
+    .table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .table {
+            font-size: 14px;
+        }
+        .table img {
+            width: 50px;
+            height: 50px;
+        }
+    }
+</style>
+
+
+    <main class="main pages">
+        <div class="page-header breadcrumb-wrap">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="{% url 'core:index' %}" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a>
+                    <span></span> Pages <span></span> Order Details
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-content pt-20 pb-150">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-8 m-auto">
+                        <h3 class="text-center mb-20">
+                            Order <span style="color: #3BB77E;">#{{ order.oid }}</span> was placed on {{ order.order_date|date:"F d, Y" }} and is currently
+                            <strong>
+                                <span class="mt-10" 
+                                style="color: 
+                                {% if order.product_status == 'processing' %} orange 
+                                {% elif order.product_status == 'shipped' %} blue 
+                                {% elif order.product_status == 'delivered' %} green 
+                                {% endif %};">
+                                    {{ order.product_status|title }}
+                                </span>
+                            </strong>
+                        </h3>
+
+                        
+                        
+                        <!-- Order Information -->
+
+                        <!-- Order Products -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="mb-0">Order Products</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Product Name</th>
+                                                <th>Image</th>
+                                               
+                                                <th>Quantity</th>
+                                                
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for oi in order_items %}
+                                            <tr>
+                                                <td>{{ oi.item }}</td>
+                                                <td>
+                                                    <img src="{{ oi.image }}" alt="{{ oi.item }}" style="width: 60px; height: 60px; object-fit: cover;">
+                                                </td>
+                                                
+                                                <td>{{ oi.qty }}</td>
+                                                
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock content %}
