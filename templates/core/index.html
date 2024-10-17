@@ -102,7 +102,43 @@
         </style>
    </head>
 
+<script>
+    function addToCart(quantity, product_id,product_pid,product_image,product_title,product_price ) {
+        
+        console.log("Quantity:", quantity);
+        console.log("Title:", product_title);
+        console.log("Price:", product_price);
+        console.log("ID:", product_id);
+        console.log("PID:", product_pid);
+        console.log("Image:", product_image);
+    
+        $.ajax({
+            url: '/add-to-cart',
+            
+            data: {
+                'id': product_id,
+                'pid': product_pid,
+                'image': product_image,
+                'qty': quantity,
+                'title': product_title,
+                'price': product_price,
+            },
+            dataType: 'json',
+            beforeSend: function(){
+                console.log("Adding Product to Cart...");
+            },
+            success: function(response){
+                // this_val.html("✓")
+                this_val.html("<i class='fas fa-check-circle'></i>")
 
+                console.log("Added Product to Cart!");
+                $(".cart-items-count").text(response.totalcartitems)
+    
+    
+            }
+        })
+    }
+</script>
     <main class="main" style="margin:0 5%;">
        
         <section class="compare-products compare-products-section">
@@ -391,8 +427,9 @@
                                                     <input type="hidden" class="product-image-{{ deal.product.id }}" value="{{ deal.product.image.url }}">
                                                     <input type="hidden" class="product-id-{{ deal.product.id }}" value="{{ deal.product.id }}">
                                                     <input type="hidden" class="product-title-{{ deal.product.id }}" value="{{ deal.product.title }}">
+                                                    <input type="hidden" class="current-product-price-{{ deal.product.id }}" value="{{ deal.get_discounted_price}}">
                                                     
-                                                    <button class="add add-to-cart-btn" data-index="{{ deal.product.id }}" style="border: none;" id="add-to-cart-btn">
+                                                    <button  onclick="addToCart(1, '{{ deal.product.id }}','{{ deal.product.pid }}','{{ deal.product.image.url }}','{{ deal.product.title }}','{{deal.get_discounted_price}}' )" data-index="{{ deal.product.id }}" style="border: none;" id="add-to-cart-btn">
                                                         {% if deal.product.id|stringformat:"s" in cart_data %}
                                                             <i class='fas fa-check-circle'></i>
                                                         {% else %}
@@ -967,11 +1004,12 @@
                         console.log("Product added to compare list!"); // Log on success
                         $(".compare_count").text(response.total_comparison_items)
                         // Optionally, change the button UI to indicate success
+
                         this_val.html("<i class='fas fa-check-circle'></i>");
                         $(".compare-products-section").html(response.comparison_html);
                         
                         updateCompareCounter();
-
+                        fetchAndDisplayMessages();
                         refreshDOM();
                     }
                 }

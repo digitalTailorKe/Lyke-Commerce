@@ -29,6 +29,82 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/intasend-inlinejs-sdk@3.0.4/build/intasend-inline.js"></script>
+    <style>
+        .floating-alert {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+            max-width: 400px;
+            opacity: 0.95;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.5s ease, bottom 0.5s ease;
+        }
+        
+        .floating-alert .btn-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        .floating-alert.alert-dismissible {
+            bottom: 30px;
+        }
+    </style>
+    <script>
+
+        function fetchAndDisplayMessages() {
+            $.ajax({
+                url: '/messages/',  // Replace with your Django endpoint
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}', // CSRF token for security
+                },
+                success: function(data) {
+                    const messages = data.messages;
+                    if (messages.length > 0) {
+                        messages.forEach(function(msg) {
+                            const alertHtml = `
+                                <div class="alert alert-dismissible fade show alert-${getBootstrapClass(msg.level)} floating-alert" role="alert">
+                                    ${msg.message}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>`;
+                            
+                            $('body').append(alertHtml);  // Append it to the body or a specific container
+        
+                            // Automatically close the alert after 5 seconds
+                            setTimeout(function() {
+                                $('.floating-alert').alert('close');
+                            }, 5000);
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching messages:', error);
+                }
+            });
+        }
+        
+        // Helper function to map Django message levels to Bootstrap classes
+        function getBootstrapClass(level) {
+            switch (level) {
+                case 10:  // DEBUG
+                case 20:  // INFO
+                    return 'info';
+                case 25:  // SUCCESS
+                    return 'success';
+                case 30:  // WARNING
+                    return 'warning';
+                case 40:  // ERROR
+                    return 'danger';
+                default:
+                    return 'secondary';
+            }
+        }
+        
+       
+    </script>
     
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -488,7 +564,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- {% if messages %}
+                {% if messages %}
                     {% for message in messages %}
                         <div class="alert alert-{{message.tags}}">
                             <strong>{{ message }}</strong>
@@ -499,7 +575,7 @@
                     setTimeout (() => {
                         $(".alert").alert("close");
                     }, 3000)
-                </script> -->
+                </script>
             </div>
         </div>
     </header>
@@ -905,18 +981,82 @@
     </div> -->
     <!-- Vendor JS-->
 
-    <script>
 
-        new window.IntaSend({
-        publicAPIKey: "ISPubKey_test_85134a4c-886f-4d3c-9030-e1baddb0902a",
-        live: false //set to true when going live
-        })
-        .on("COMPLETE", (results) => console.log("Do something on success", results))
-        .on("FAILED", (results) => console.log("Do something on failure", results))
-        .on("IN-PROGRESS", (results) => console.log("Payment in progress status", results))
-      
-      </script>
+    <script src="https://cdn.jsdelivr.net/npm/currency-symbol-map@5.0.4/lib/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
+        // Function to replace all $ symbols in text with the current currency symbol
+        function replaceDollarSymbols(currencySymbol) {
+            // Select all elements on the page
+            const elements = document.querySelectorAll('*');
+
+            elements.forEach(function(element) {
+                // Check if the element contains any text node
+                if (element.childNodes.length > 0) {
+                    element.childNodes.forEach(function(child) {
+                        // Ensure we're working with a text node
+                        if (child.nodeType === Node.TEXT_NODE && child.nodeValue.includes('$')) {
+                            // Replace all instances of $ but leave the rest of the text intact
+                            console.log("runs")
+                            child.nodeValue = child.nodeValue.replace(/\$/g, currencySymbol);
+                        }
+                    });
+                }
+            });
+        }
+
+        function currencySymbolMap(countryCode) {
+            const currencyMap = {
+                'US': '$',   // United States Dollar
+                'CA': 'CA$', // Canadian Dollar
+                'GB': '£',   // British Pound
+                'EU': '€',   // Euro
+                'JP': '¥',   // Japanese Yen
+                'IN': '₹',   // Indian Rupee
+                'AU': 'A$',  // Australian Dollar
+                'CN': '¥',   // Chinese Yuan
+                // Add more mappings as needed
+            };
+
+            // Return the symbol if country code exists, else return the default dollar
+            return currencyMap[countryCode] || '$';
+        }
+
+        function currencyCodeMap(countryCode) {
+            const currencyMap = {
+                'US': 'USD',  // United States Dollar
+                'CA': 'CAD',  // Canadian Dollar
+                'GB': 'GBP',  // British Pound
+                'EU': 'EUR',  // Euro
+                'JP': 'JPY',  // Japanese Yen
+                'IN': 'INR',  // Indian Rupee
+                'AU': 'AUD',  // Australian Dollar
+                'CN': 'CNY',  // Chinese Yuan
+                // Add more mappings as needed
+            };
+    
+            // Return the currency code, default to 'USD' if not found
+            return currencyMap[countryCode] || 'USD';
+        }
+
+        // Example: Using an IP-based API to get the user's country
+        $.get('https://ipapi.co/json/', function(data) {
+            const countryCode = data.country_code;
+            console.log("currency ip code ")
+            const currencyCode = currencyCodeMap(countryCode);
+            localStorage.setItem('currencyCode', currencyCode);
+            
+            // Use the country code to get the currency symbol
+            const currencySymbol = currencySymbolMap(countryCode);
+            
+            // If currency symbol exists, replace all dollar symbols
+            if (currencySymbol) {
+                replaceDollarSymbols(currencySymbol);
+            }
+        });
+    </script>
+    <script>
+        
         document.getElementById("currentYear").innerHTML = new Date().getFullYear();
     </script>  
     <script data-cfasync="false" src="{% static '/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js' %}"></script>

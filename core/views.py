@@ -573,7 +573,7 @@ def create_checkout_session(request, oid):
         line_items = [
             {
                 'price_data': {
-                    'currency': 'USD',
+                    'currency': request.user_currency_code,
                     'product_data': {
                         'name': order.full_name
                     },
@@ -640,7 +640,6 @@ def checkout(request, oid):
     }
 
     return render(request, "core/checkout.html", context)
-
 
 
 
@@ -1360,6 +1359,17 @@ def valid(request):
 #         print(f"Failed to send SMS: {e}")
 #         # Return the exception as a string in a dictionary
 #         return JsonResponse({"error": str(e)})
+from django.views.decorators.http import require_POST
+@require_POST
+def show_and_delete_messages(request):
+    messages_list = []
+    for message in messages.get_messages(request):
+        messages_list.append({
+            'level': message.level,
+            'message': message.message,
+        })
+
+    return JsonResponse({'messages': messages_list})
 
 @csrf_exempt
 def send_payment_confirmation_email(request, to_email, order_id):
@@ -1392,6 +1402,7 @@ def send_payment_confirmation_email(request, to_email, order_id):
 def send_payment_confirmation_mail( to_email, order_id ):
     
     order = CartOrder.objects.get(oid=order_id)
+    send_sms(order.phone,order.oid,order.price)
     print(order, "inside email")
     """
     Send a payment confirmation email to the client using Django's email service
