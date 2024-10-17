@@ -584,7 +584,7 @@ def create_checkout_session(request, oid):
         ],
         mode = 'payment',
         success_url = request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid])) + "?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url = request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid]))
+        cancel_url = request.build_absolute_uri(reverse("core:payment-failed", args=[order.oid]))
     )
 
     order.paid_status = False
