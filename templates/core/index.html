@@ -104,13 +104,12 @@
 
 
     <main class="main" style="margin:0 5%;">
-        {% if filter_products %}
+       
         <section class="compare-products compare-products-section">
             {% include 'core/comparison_section.html' %}
-            
         </section>
         
-        {% endif %}
+    
         <div class="container mb-30">
             <div class="row flex-row-reverse">
                 <div class="col-lg-4-5">
@@ -941,6 +940,7 @@
     <script src="{% static 'assets/js/function.js' %}"></script>
     
     <script>
+
         $(".compare-products").on("click", function() {
 
             let this_val = $(this); // Current button element
@@ -967,10 +967,8 @@
                         $(".compare_count").text(response.total_comparison_items)
                         // Optionally, change the button UI to indicate success
                         this_val.html("<i class='fas fa-check-circle'></i>");
-                        
                         $(".compare-products-section").html(response.comparison_html);
-                        window.location.reload();
-                        // Update the compare counter
+                        
                         updateCompareCounter();
 
                         refreshDOM();
@@ -986,8 +984,10 @@
                 dataType: 'json',
                 success: function(data) {
                     // Update the compare counter with the new count
-                    $(".compare-counter").text(data.compare_count);
-                    console.log("Compare counter updated:", data.compare_count); // Log new count
+                    $(".compare_count").text(data.compare_count);
+                    console.log("Compare counter updated:", data.compare_count);
+                    
+                    refreshDOM();// Log new count
                 }
             });
         }
@@ -995,9 +995,9 @@
 
         $(document).ready(function(){
             $('[data-toggle="popover"]').popover({
-                trigger: 'hover', // Popover shows on hover
-                html: true,       // If you want HTML content inside the popover
-            });
+              trigger: 'hover', // Popover shows on hover
+               html: true,       // If you want HTML content inside the popover
+           });
         });
 
         function refreshDOM() {
@@ -1013,12 +1013,24 @@
         
         }
 
+        function checkAndClearCompareSection() {
+            let compareSection = $('.compare-products-section');  // Select the section that wraps everything
+            let compareRow = compareSection.find('.row');  // Select the row inside the section
+            let products = compareRow.children('.col-lg-4');  // Select all product cards inside the row
+        
+            if (products.length === 0) {
+                compareSection.empty();  // Remove the entire row if no products are left
+                // Optionally, you can hide the whole compare section if you don't want to show a message:
+                // compareSection.hide();  // Uncomment this line to hide the whole section
+            }
+        }
+        
 
         $(document).on('click', '.remove-btn', function(e) {
             e.preventDefault();  // Prevent the default action (i.e., page reload)
-        
             let removeUrl = $(this).attr('href');  // Get the URL for removing the product
-        
+            let productElement = $(this).closest('.col-lg-4');
+            console.log(removeUrl)
             $.ajax({
                 url: removeUrl,  // URL to send the remove request
                 method: 'POST',  // Use POST method
@@ -1027,9 +1039,15 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        window.location.reload();  // Refresh the comparison table
-                        $(".compare-counter").text(response.total_comparison_items);  // Update counter
+                    console.log("runs success")
+                    productElement.remove(); 
+
+                    updateCompareCounter();
+                    checkAndClearCompareSection()
+
+                    refreshDOM(); // Update counter
                     } else {
+
                         alert("There was an error removing the product.");
                     }
                 },
