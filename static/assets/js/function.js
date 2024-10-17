@@ -143,7 +143,7 @@ $(document).ready(function (){
         let product_title = $(".product-title-" + index).val()
     
         let product_id = $(".product-id-" + index).val()
-        let product_price = $(".current-product-price-" + index).text()
+        let product_price = $(".current-product-price-" + index).val()
     
         let product_pid = $(".product-pid-" + index).val()
         let product_image = $(".product-image-" + index).val()

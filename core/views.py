@@ -379,7 +379,8 @@ def cart_view(request):
                 # Log the error or handle the case where the conversion failed
                 messages.error(request, f"Invalid price or quantity for item {item.get('title', 'Unknown Item')}")
                 continue
-
+        print("\n\n\n ", request.session['cart_data_obj'] , "\n\n\n")
+        print("\n\n\n ", cart_total_amount , "\n\n\n")
         return render(request, "core/cart.html", {
             "cart_data": request.session['cart_data_obj'],
             'totalcartitems': len(request.session['cart_data_obj']),
@@ -650,6 +651,7 @@ def payment_completed_view(request, oid):
     if order.paid_status == False:
         order.paid_status = True
         order.save()
+    send_payment_confirmation_mail(order.email,order.oid)
         
     context = {
         "order": order,
@@ -916,7 +918,7 @@ def query_mpesa_payment(request):
         
             transaction.save()
             
-            print(order.balance, "found order")
+            # print(order.balance, "found order")
             
             
             
@@ -1010,6 +1012,11 @@ def mpesa_callback(request):
                             order.paid_status = True
                             
                             order.save()
+                            print("here")
+                            send_payment_confirmation_mail(order.email,order.oid)
+                            print("after here")
+
+
                         else:
                             print("order not found")
                         
@@ -1096,7 +1103,7 @@ def lipa_na_mpesa_online(request):
                 "PartyA": phone_number,
                 "PartyB": business_short_code,
                 "PhoneNumber": phone_number,
-                "CallBackURL": "https://6398-2c0f-2a80-10d6-3010-b8a3-2dc9-82a9-91ff.ngrok-free.app/mpesa/callback/",
+                "CallBackURL": "https://dc53-2409-4072-ebf-8658-cd16-f006-9df0-bab0.ngrok-free.app/mpesa/callback/",
                 "AccountReference": order_id,
                 "TransactionDesc": "Payment for XYZ"
             }
@@ -1380,6 +1387,34 @@ def send_payment_confirmation_email(request, to_email, order_id):
         print(f"Email sent successfully to {to_email}")
     except Exception as e:
         print(f"Failed to send email: {e}")
+
+
+def send_payment_confirmation_mail( to_email, order_id ):
+    
+    order = CartOrder.objects.get(oid=order_id)
+    print(order, "inside email")
+    """
+    Send a payment confirmation email to the client using Django's email service
+    """
+    subject = "Payment Confirmation"
+    from_email = settings.DEFAULT_FROM_EMAIL
+    print(to_email)
+    print(f"Sending email from: {from_email}")
+
+    # HTML content (email body)
+    html_content = render_to_string("email/payment_confirmation.html", {
+        'order': order,  # You can pass any variables you want to the template
+    })
+
+    # Sending the email with both plain text and HTML versions
+    try:
+        email = EmailMultiAlternatives(subject, html_content, from_email, [to_email])
+        email.content_subtype = "html"  # Main content is now HTML
+        email.send()
+        print(f"Email sent successfully to {to_email}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        
         
         
 @csrf_exempt  # This is just to allow the view to accept requests without CSRF token, remove in production or secure with a CSRF token
