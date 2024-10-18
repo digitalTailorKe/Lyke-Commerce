@@ -287,9 +287,11 @@ $(document).ready(function (){
             },
             dataType: "json",
             beforeSend: function(){
+                console.log("runs before send")
                 this_val.hide()
             },
             success: function(response){
+                console.log(response)
                 this_val.show()
                 $(".cart-items-count").text(response.totalcartitems)
                 $("#cart-list").html(response.data)

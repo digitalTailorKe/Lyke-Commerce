@@ -424,7 +424,7 @@ def update_cart(request):
             cart_total_amount += int(item['qty']) * float(item['price'])
 
     context = render_to_string("core/async/cart-list.html", {"cart_data":request.session['cart_data_obj'], 'totalcartitems': len(request.session['cart_data_obj']), 'cart_total_amount':cart_total_amount})
-    return JsonResponse({"data": context, 'totalcartitems': len(request.session['cart_data_obj'])})
+    return JsonResponse({"cart_data":request.session['cart_data_obj'],"data": context, 'totalcartitems': len(request.session['cart_data_obj'])})
 
 @csrf_exempt
 def save_checkout_info(request):
