@@ -152,10 +152,6 @@ body {
     line-height: 1;
 }
 
-main {
-    display: block;
-    margin: 0 5% !important;
-}
 
 ol,
 ul {
@@ -922,7 +918,7 @@ strong,
     -ms-flex-align: center;
     align-items: end;
     margin-bottom: 44px;
-    position: relative;
+    /* position: relative; */
     -webkit-box-pack: justify;
     -ms-flex-pack: justify;
     justify-content: space-between;
@@ -2726,6 +2722,22 @@ input.qty-val {
 }
 
 /*COMPONENTS -> TABS*/
+
+.tabs-scrollable {
+    overflow-x: auto; /* Enable horizontal scrolling */
+    overflow-y: hidden; /* Hide vertical overflow */
+    white-space: nowrap; /* Prevent wrapping */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+.nav-tabs {
+    display: inline-flex; /* Align items in a single line */
+}
+
+.nav-tabs .nav-item {
+    flex: 0 0 auto; /* Prevent items from shrinking */
+    margin-right: 10px; /* Space between tabs */
+}
 
 .nav-tabs {
     border: 0;
@@ -7225,6 +7237,7 @@ h6.post-title {
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
+    flex-wrap: nowrap;
     -webkit-box-align: center;
     -ms-flex-align: center;
     align-items: center;
@@ -7234,6 +7247,7 @@ h6.post-title {
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
+    flex-wrap: nowrap;
     -webkit-box-pack: justify;
     -ms-flex-pack: justify;
     justify-content: space-between;
@@ -7255,6 +7269,7 @@ h6.post-title {
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
+    flex-wrap: nowrap;
     -webkit-box-align: center;
     -ms-flex-align: center;
     align-items: center;
