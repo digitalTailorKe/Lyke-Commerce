@@ -99,6 +99,7 @@
             }
 
 
+
         </style>
    </head>
 
@@ -139,14 +140,14 @@
         })
     }
 </script>
-    <main class="main" style="margin:0 5%;">
+    <div class="container-xxl">
        
         <section class="compare-products compare-products-section">
             {% include 'core/comparison_section.html' %}
         </section>
         
     
-        <div class="container mb-30">
+        <div class="container-xxl mb-30">
             <div class="row flex-row-reverse">
                 <div class="col-lg-4-5">
                     <section class="home-slider position-relative mb-30">
@@ -182,29 +183,32 @@
                     </section>
                     <!--End hero-->
                     <section class="product-tabs section-padding position-relative">
-                        <div class="section-title style-2">
+                        <div>
                             <h3>Popular Products</h3>
-                            <ul class="nav nav-tabs links" id="myTab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="nav-tab-all" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab" aria-controls="tab-all" aria-selected="true">All</button>
-                                </li>
-                                {% for category in categories %}
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="nav-tab-{{ category.id }}" data-bs-toggle="tab" data-bs-target="#tab-{{ category.id }}" type="button" role="tab" aria-controls="tab-{{ category.id }}" aria-selected="false">{{ category.title }}</button>
-                                    </li>
-                                {% endfor %}
-                            </ul>
                         </div>
+
+                        <ul class="nav nav-tabs links" id="myTab" role="tablist">
+                            <li class="nav-item" style="margin-top: 10px;" role="presentation">
+                                <button class="nav-link active" id="nav-tab-all" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab" aria-controls="tab-all" aria-selected="true">All</button>
+                            </li>
+                            {% for category in categories %}
+                                <li class="nav-item" style="margin-top: 10px;" role="presentation">
+                                    <button class="nav-link" id="nav-tab-{{ category.id }}" data-bs-toggle="tab" data-bs-target="#tab-{{ category.id }}" type="button" role="tab" aria-controls="tab-{{ category.id }}" aria-selected="false">{{ category.title }}</button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <br>
+                        <br>
                         <!--End nav-tabs-->
                         
                         <div class="tab-content" id="myTabContent">
                             <!-- Tab for All products -->
                             <div class="tab-pane fade show active" id="tab-all" role="tabpanel" aria-labelledby="tab-all">
-                                <div class="row flex product-grid-4" id="filtered-product">
+                                <div class="row product-grid-4" id="filtered-product">
                                     {% for category, products in categorized_products.items %}
                                         {% for p in products %}
-                                            <div class="" style="width: 31%">
-                                                <div class="product-cart-wrap mb-30">
+                                            <div class="col-12 col-sm-6 col-md-4 mb-30">  <!-- Changed to use Bootstrap columns -->
+                                                <div class="product-cart-wrap">
                                                     <div class="product-img-action-wrap">
                                                         <div class="product-img product-img-zoom">
                                                             <a href="{% url 'core:product-detail' p.pid %}">
@@ -236,14 +240,10 @@
                                                         <div class="product-card-bottom">
                                                             <div class="product-price">
                                                                 <span>{{ current_currency }}
-                                                                    {% with price=converted_product_prices|get_item:p.id %}
-                                                                        {{ price|floatformat:2|default:"N/A" }}
-                                                                    {% endwith %}   
+                                                                    {% with price=converted_product_prices|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}   
                                                                 </span>
                                                                 <span class="old-price">{{ current_currency }} 
-                                                                    {% with price=converted_old_price|get_item:p.id %}
-                                                                        {{ price|floatformat:2|default:"N/A" }}
-                                                                    {% endwith %}
+                                                                    {% with price=converted_old_price|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}
                                                                 </span>
                                                             </div>
                                                             <div class="add-cart">
@@ -252,8 +252,8 @@
                                                                 <input type="hidden" class="product-image-{{ p.id }}" value="{{ p.image.url }}">
                                                                 <input type="hidden" class="product-id-{{ p.id }}" value="{{ p.id }}">
                                                                 <input type="hidden" class="product-title-{{ p.id }}" value="{{ p.title }}">
-                                                                <input type="hidden" class="current-product-price-{{ p.id }}" value="{{ converted_product_prices|get_item:p.id}} ">
-        
+                                                                <input type="hidden" class="current-product-price-{{ p.id }}" value="{{ converted_product_prices|get_item:p.id }}">
+                                
                                                                 <div class="d-flex bottom-action">
                                                                     <button class="add add-to-cart-btn" data-index="{{ p.id }}" style="border: none;" id="add-to-cart-btn">
                                                                         {% if p.id|stringformat:"s" in cart_data %}
@@ -263,7 +263,7 @@
                                                                         {% endif %}
                                                                     </button>
                                                                     <button style="border: none; background: none;" class="add-to-wishlist" data-product-item="{{p.id}}"
-                                                                      data-toggle="popover" data-content="Wishlist" data-placement="top">
+                                                                        data-toggle="popover" data-content="Wishlist" data-placement="top">
                                                                         <i class="fi-rs-heart" style="fill: aqua;"></i>
                                                                     </button>
                                                                     <button style="border: none; background: none;" class="compare-products action-btn" 
@@ -281,7 +281,6 @@
                                                 </div>
                                             </div>
                                         {% endfor %}
-                                    
                                     {% endfor %}
                                 </div>
                             </div>
@@ -598,8 +597,10 @@
                     </div>
             </div>
         </div>
+
+        
         <section class="popular-categories section-padding">
-            <div class="container">
+            <div class="container-xxl">
                 <div class="section-title">
                     <div class="title">
                         <h3>Shop by Categories</h3>
@@ -703,7 +704,7 @@
         </section>
         <!--End category slider-->
         <section class="section-padding mb-30">
-            <div class="container">
+            <div class="container-xxl">
                 <div class="row">
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-sm-5 mb-md-0">
                         <h4 class="section-title style-1 mb-30 animated animated">Top Selling</h4>
@@ -969,7 +970,7 @@
             </div>
         </section>
         <!--End 4 columns-->
-    </main>
+    </div>
 
     
 
