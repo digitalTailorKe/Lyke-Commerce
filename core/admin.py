@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core.models import CartOrderProducts, Coupon, DealOfTheDay, Product, Category, Vendor, CartOrder, ProductImages, ProductReview, wishlist_model, Address, MpesaTransaction
+from core.models import CartOrderProducts, Country, Coupon, Currency, DealOfTheDay, Product, Category, Vendor, CartOrder, ProductImages, ProductReview, wishlist_model, Address, MpesaTransaction
 
 class ProductImagesAdmin(admin.TabularInline):
     model = ProductImages
@@ -55,6 +55,20 @@ class DealOfTheDayAdmin(admin.ModelAdmin):
         return obj.get_discounted_price()
     get_discounted_price.short_description = 'Discounted Price'
 
+class CurrencyAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'symbol', 'exchange_rate_to_usd')
+    search_fields = ('name', 'code')
+    list_filter = ('code',)
+    ordering = ('name',)
+
+class CountryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'currency')
+    search_fields = ('name',)
+    list_filter = ('currency',)
+    ordering = ('name',)
+
+admin.site.register(Country, CountryAdmin)
+admin.site.register(Currency, CurrencyAdmin)
 admin.site.register(DealOfTheDay, DealOfTheDayAdmin)
 admin.site.register(MpesaTransaction, MpesaTransactionAdmin)
 admin.site.register(Product, ProductAdmin)
