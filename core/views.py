@@ -516,7 +516,7 @@ def save_checkout_info(request):
 
 
             send_payment_confirmation_email(request, to_email=email, order_id=order.oid)
-            send_sms(mobile, order.oid, total_amount)
+            send_sms_confirmation(mobile, order.oid)
 
           
         return redirect("core:checkout", order.oid)
@@ -526,13 +526,32 @@ def save_checkout_info(request):
 africastalking.initialize(settings.AFRICASTALKING_USERNAME, settings.AFRICASTALKING_API_KEY)
 sms = africastalking.SMS
 
-def send_sms(phone_number, order, price):
+def send_sms_after_payment(phone_number, order, price):
 
     if not phone_number.startswith('+'):
         phone_number = f'+{phone_number}'
         print(phone_number)
 
     message = f"Dear customer, your payment of {price} for order {order} has been received successfully. Thank you for shopping with us!"
+    sender = "Lyke Enterprise LTD"
+    sender_id = "43435"
+
+    try:
+        # Send the SMS using AfricasTalking SMS service
+        response = sms.send(message, [phone_number])
+        print(f"SMS sent successfully: {response}")
+        return {"message": "SMS sent successfully", "response": response}
+    except Exception as e:
+        print(f"Failed to send SMS: {e}")
+        return {"error": str(e)}
+
+def send_sms_confirmation(phone_number, order):
+
+    if not phone_number.startswith('+'):
+        phone_number = f'+{phone_number}'
+        print(phone_number)
+
+    message = f"Dear customer, your order {order} has been received successfully. Thank you for shopping with us!"
     sender = "Lyke Enterprise LTD"
     sender_id = "43435"
 
@@ -1402,7 +1421,7 @@ def send_payment_confirmation_email(request, to_email, order_id):
 def send_payment_confirmation_mail( to_email, order_id ):
     
     order = CartOrder.objects.get(oid=order_id)
-    send_sms(order.phone,order.oid,order.price)
+    send_sms_after_payment(order.phone,order.oid,order.price)
     print(order, "inside email")
     """
     Send a payment confirmation email to the client using Django's email service
