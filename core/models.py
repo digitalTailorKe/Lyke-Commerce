@@ -15,14 +15,9 @@ STATUS_CHOICE = (
 
 PAYMENT_CHOICE = (
     ("draft", "Draft"),
-    ("pending", "Pending"),
-    ("processing", "Processing"),
-    ("onhold", "Onhold"),
     ("completed", "Completed"),
     ("failed", "Failed"),
     ("cancelled", "Cancelled"),
-    ("refunded", "Refunded"),
-    ("paid-partially", "Paid partially"),
     ("over-pay", "Over pay"),
     ("failed", "Failed"),
 )

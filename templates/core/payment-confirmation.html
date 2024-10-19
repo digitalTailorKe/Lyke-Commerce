@@ -38,12 +38,28 @@
                     </form>
 
 
-                <!-- Countdown Display beside the button -->
-                <div id="countdownDisplay" class="text-muted ms-2"></div>
+
                 
                 <button type="button"  style="margin: 10px;" class="btn btn-dark btn-lg">Cancel Order & Restore Cart</button>
             </div>
         </div>
+
+        <div class="modal fade" id="paymentProcessingModal" tabindex="-1" aria-labelledby="paymentProcessingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="paymentProcessingModalLabel">Processing Payment</h5>
+                </div>
+                <div class="modal-body">
+                  We are processing your order. Please make sure you have <strong> $ {{ cart_order.price }}</strong> in your account.
+                </div>
+                <div class="modal-footer">
+                                  <!-- Countdown Display beside the button -->
+                <div id="countdownDisplay" class="text-muted ms-2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
 
         <!-- Right Column: Payment Instructions -->
         <div class="col-md-6">
@@ -71,13 +87,47 @@
             </div>
 
             <div>
-                <button type="button" class="btn btn-success btn-lg">Complete</button>
+                <button type="button" id="completeOrderButton" class="btn btn-success btn-lg">Complete</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+
+    $(document).ready(function() {
+        // Handle the "Complete" button click
+        $('#completeOrderButton').on('click', function(event) {
+            event.preventDefault();  // Prevent default button behavior
+
+            // Disable the button to prevent multiple clicks
+            var $completeOrderButton = $(this);
+            $completeOrderButton.prop('disabled', true).text('Completing Order...');
+
+            // Send the AJAX request to check the order status
+            $.ajax({
+                url: "{% url 'core:check_order_status' cart_order.oid %}",  // Replace with your actual backend URL
+                type: "GET",  // or POST, depending on your backend method
+                success: function(response) {
+                    if (response.success) {
+                        // Redirect to order summary or success page
+                        window.location.href = `/payment-completed/{{ cart_order.oid }}/`;  // Replace with your success page URL
+                    } else {
+                        // Handle failure case (e.g., show error message)
+                        alert('Order check failed. Please try again.');
+                    }
+                    $completeOrderButton.prop('disabled', false).text('Complete');
+                },
+                error: function(xhr, status, error) {
+                    // Handle error case (e.g., show error message)
+                    alert('Order check failed. Please try again.');
+                    $('#paymentErrorAlert').removeClass('d-none');
+                    $completeOrderButton.prop('disabled', false).text('Complete');
+                }
+            });
+        });
+    });
+
 
     $(document).ready(function() {
         // Initially hide the M-Pesa form container
@@ -95,6 +145,76 @@
         $('#paymentErrorAlert').removeClass('d-none');
 
         $('#mpesaPaymentForm').on('submit', function(event) {
+    
+            event.preventDefault(); 
+            $('#paymentErrorAlert').addClass('d-none');
+        
+            // Show the modal when the button is clicked
+            var $paymentProcessingModal = new bootstrap.Modal(document.getElementById('paymentProcessingModal'));
+            $paymentProcessingModal.show();
+        
+            // Disable the "Pay Now" button and change its text to indicate waiting state
+            var $payNowButton = $('#payNowButton');
+            $payNowButton.prop('disabled', true).text('Processing Payment...');
+            
+            // Convert form data to a JSON object
+            var formDataArray = $(this).serializeArray();  // Get form data as an array
+            var formData = {};
+            
+            // Convert array to JSON object
+            $.each(formDataArray, function(_, field) {
+                formData[field.name] = field.value;
+            });
+        
+            // Make the M-Pesa payment request
+            $.ajax({
+                url: "{% url 'core:lipa_na_mpesa_online' %}",
+                type: "POST",
+                data: JSON.stringify(formData),
+                contentType: "application/json",
+                dataType: "json",
+                success: function(response) {
+                    if (response.CheckoutRequestID) {
+                        CheckoutRequestID = response.CheckoutRequestID;  // Store CheckoutRequestID for the query
+                        
+                        // Start a 30-second timer before querying payment status
+                        var countdown = 30;
+                        var $countdownDisplay = $('#countdownDisplay');  // Reference to the countdown display element
+                        $countdownDisplay.text('Time remaining: ' + countdown + 's');  // Initial text
+                        
+                        var timerInterval = setInterval(function() {
+                            countdown--;
+                            $countdownDisplay.text('Time remaining: ' + countdown + 's');
+                            
+                            if (countdown <= 0) {
+                                clearInterval(timerInterval);  // Stop the timer
+                                queryMpesaStatus(CheckoutRequestID); 
+                                $paymentProcessingModal.hide();  // Call the query function
+                                $countdownDisplay.text('');  // Clear the countdown display
+                            }
+                        }, 1000);
+                        
+                    } else {
+                        $('#paymentErrorAlert').removeClass('d-none');  // Show error message
+                        $payNowButton.prop('disabled', false).text('Pay Now');
+                        $paymentProcessingModal.hide();  // Close the modal if there's an error
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#paymentErrorAlert').removeClass('d-none');  // Show error message
+                    $payNowButton.prop('disabled', false).text('Pay Now');  // Reset the button
+                    $('#countdownDisplay').text('');  // Clear countdown on error
+                    $paymentProcessingModal.hide();  // Close the modal on error
+                },
+                complete: function() {
+                    // Once the payment process is complete, enable the button and close the modal
+                    //$payNowButton.prop('disabled', false).text('Pay Now');
+                     // Close the modal when done
+                }
+            });
+        });
+
+       /* $('#mpesaPaymentForm').on('submit', function(event) {
             
             event.preventDefault(); 
             $('#paymentErrorAlert').addClass('d-none');
@@ -151,7 +271,7 @@
                     $('#countdownDisplay').text('');  // Clear countdown on error
                 }
             });
-        });
+        }); */
         
         // Function to query M-Pesa status after 30 seconds
         function queryMpesaStatus(CheckoutRequestID) {

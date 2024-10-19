@@ -378,7 +378,7 @@
                     </div>
                     <div class="header-nav d-none d-lg-flex">
                         <div class="main-categori-wrap d-none d-lg-block">
-                            <a class="categories-button-active" href="#">
+                            <a class="categories-button-active" href="{% url 'core:category-list' %}">
                                 <span class="fi-rs-apps"></span> 
                                 <!-- <span class="et">Browse</span> -->
                                  All Categories
@@ -411,7 +411,7 @@
                                     </li>
 
                                     <li>
-                                        <a href="shop-grid-right.html">Category <i class="fi-rs-angle-down"></i></a>
+                                        <a href="{% url 'core:category-list' %}">Category <i class="fi-rs-angle-down"></i></a>
                                         <ul class="sub-menu">
                                             {% for c in categories %}
                                             <li>

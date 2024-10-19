@@ -516,7 +516,7 @@ def save_checkout_info(request):
 
 
             send_payment_confirmation_email(request, to_email=email, order_id=order.oid)
-            send_sms(mobile, order.oid, total_amount)
+            send_sms_confirmation(mobile, order.oid)
 
           
         return redirect("core:checkout", order.oid)
@@ -526,13 +526,32 @@ def save_checkout_info(request):
 africastalking.initialize(settings.AFRICASTALKING_USERNAME, settings.AFRICASTALKING_API_KEY)
 sms = africastalking.SMS
 
-def send_sms(phone_number, order, price):
+def send_sms_after_payment(phone_number, order, price):
 
     if not phone_number.startswith('+'):
         phone_number = f'+{phone_number}'
         print(phone_number)
 
     message = f"Dear customer, your payment of {price} for order {order} has been received successfully. Thank you for shopping with us!"
+    sender = "Lyke Enterprise LTD"
+    sender_id = "43435"
+
+    try:
+        # Send the SMS using AfricasTalking SMS service
+        response = sms.send(message, [phone_number])
+        print(f"SMS sent successfully: {response}")
+        return {"message": "SMS sent successfully", "response": response}
+    except Exception as e:
+        print(f"Failed to send SMS: {e}")
+        return {"error": str(e)}
+
+def send_sms_confirmation(phone_number, order):
+
+    if not phone_number.startswith('+'):
+        phone_number = f'+{phone_number}'
+        print(phone_number)
+
+    message = f"Dear customer, your order {order} has been received successfully. Thank you for shopping with us!"
     sender = "Lyke Enterprise LTD"
     sender_id = "43435"
 
@@ -583,8 +602,8 @@ def create_checkout_session(request, oid):
             }
         ],
         mode = 'payment',
-        success_url = request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid])) + "?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url = request.build_absolute_uri(reverse("core:payment-failed", args=[order.oid]))
+        success_url = request.build_absolute_uri(f"/payment-completed/{order.oid}/"),
+        cancel_url = request.build_absolute_uri("/payment-failed/")
     )
 
     order.paid_status = False
@@ -993,15 +1012,17 @@ def mpesa_callback(request):
                         
                         mpesa_transaction.MpesaReceiptNumber=mpesa_receipt_number
                         mpesa_transaction.PhoneNumber=phone_number
+                        mpesa_transaction.TransactionDate=timezone.now()
                         mpesa_transaction.Amount=amount
+
                         mpesa_transaction.save()
                         
                         order = CartOrder.objects.get(mpesa_checkout_request_id = checkout_request_id)
                           
                         if order:
                             
-                            # if order.mpesa_checkout_request_id == checkout_request_id:
-                            #     return JsonResponse({"error": "Cannot use similar checkout id"})
+                            if order.mpesa_checkout_request_id == checkout_request_id:
+                                return JsonResponse({"error": "Cannot use similar checkout id"})
                             
                             print("order found")
         
@@ -1009,13 +1030,13 @@ def mpesa_callback(request):
                             order.paid_amount = amount
                             order.payment_status = "completed"
                             order.paid_status = True
-                            
+                            mpesa_transaction.order_id = order.oid
+                            mpesa_transaction.is_finished=True
+                            mpesa_transaction.is_successful=False
                             order.save()
                             print("here")
                             send_payment_confirmation_mail(order.email,order.oid)
                             print("after here")
-
-
                         else:
                             print("order not found")
                         
@@ -1028,11 +1049,13 @@ def mpesa_callback(request):
             else:
                 if checkout_request_id:
                     try:
+                        print("transaction updated")
                         mpesa_transaction = MpesaTransaction.objects.get(CheckoutRequestID = checkout_request_id)
                         mpesa_transaction.ResultCode = result_code
                         mpesa_transaction.ResultDesc=result_desc
                         mpesa_transaction.is_finished=True
                         mpesa_transaction.is_successful=True
+                        mpesa_transaction.TransactionDate = timezone.now()
                         mpesa_transaction.save()
                         
                     except MpesaTransaction.DoesNotExist:
@@ -1102,7 +1125,7 @@ def lipa_na_mpesa_online(request):
                 "PartyA": phone_number,
                 "PartyB": business_short_code,
                 "PhoneNumber": phone_number,
-                "CallBackURL": "https://dc53-2409-4072-ebf-8658-cd16-f006-9df0-bab0.ngrok-free.app/mpesa/callback/",
+                "CallBackURL": "https://f2e9-41-90-36-167.ngrok-free.app/mpesa/callback/",
                 "AccountReference": order_id,
                 "TransactionDesc": "Payment for XYZ"
             }
@@ -1216,10 +1239,23 @@ def confirm(request):
                 if order.price != Decimal(trans_amount):
                     return JsonResponse({ 
                         "ResultCode": "C2B00013", 
-                        "ResultDesc": "rejected" 
+                        "ResultDesc": "rejected"
                     })
-                order.mpesa_receipt_number = trans_id
+                order.paid_amount = Decimal(trans_amount) + order.paid_amount
+                order.paid_status = True
+                decimal_paid_amount = order.paid_amount
+                
+
+                if Decimal(decimal_paid_amount) == order.price:
+                    order.payment_status = "Completed"
+                elif Decimal(decimal_paid_amount) > order.price:
+                    order.payment_status = "over-pay"
                 order.save()
+
+                return JsonResponse({ 
+                    "ResultCode": "0", 
+                    "ResultDesc": "Accepted" 
+                })
 
             except CartOrder.DoesNotExist:
                 return JsonResponse({ 
@@ -1233,56 +1269,7 @@ def confirm(request):
                 "ResultDesc": "rejected"
             })
 
-        # if bill_refrence:
-            
-        #     try:
-        #         order = CartOrder.objects.get(oid=bill_refrence)
-        #         previous_receipt = order.mpesa_receipt_number                
-        #         if previous_receipt == trans_id:
-        #            return JsonResponse({
-        #                 "ResultCode": "C2B00012",
-        #                 "ResultDesc": "rejected"
-        #             })
-        #         else:
-        #             order.mpesa_receipt_number = trans_id
-        #     except CartOrder.DoesNotExist:
-        #         return JsonResponse({ "ResultCode": "C2B00012", "ResultDesc": "rejected" })
-            
-        #     order_balance = order.balance
-        #     original_pay = order.paid_amount
-        #     order_price = order.price
-            
-        #     print(original_pay)
-        #     paid_balance = order_balance - Decimal(trans_amount)
-        #     updated_pay = original_pay + Decimal(trans_amount)
-            
-        #     order.paid_amount  = updated_pay
-        #     order.balance = paid_balance
-            
-        #     if updated_pay == order_price:
-        #         order.payment_status = "draft"
-        #     elif updated_pay < order_price:
-        #         order.payment_status = "paid-partially"
-        #     elif updated_pay > order_price:
-        #         order.payment_status = "over-pay"
-                
-        #     print(order.payment_status)
 
-        #     print(paid_balance)
-        #     order.paid_status = True
-            
-        #     order.save() 
-        # else:
-        #     return JsonResponse({
-        #         "ResultCode": "C2B00012",
-        #         "ResultDesc": "rejected"
-        #     })
-            
-        
-        # return JsonResponse({
-        #     "ResultCode": "0",
-        #     "ResultDesc": "Accepted"
-        #     })
      
 @csrf_exempt  
 def valid(request):
@@ -1291,6 +1278,8 @@ def valid(request):
             data = json.loads(request.body.decode('utf-8'))
             bill_refrence = data.get('BillRefNumber')
             amount = data.get('TransAmount')
+            trans_id = data.get('Transid')
+
 
             try:
                 order = CartOrder.objects.filter(oid=bill_refrence).first()
@@ -1311,8 +1300,23 @@ def valid(request):
                         "ResultCode": "C2B00012",
                         "ResultDesc": "rejected"
                     })
+                try:
+                    if order.mpesa_receipt_number == trans_id:
+                        return JsonResponse({
+                           "ResultCode": "0",
+                           "ResultDesc": "Accepted"
+                        })
+                    else:
+                       return JsonResponse({
+                          "ResultCode": "C2B00014",
+                          "ResultDesc": "rejected"
+                        })
+                except:
+                    return JsonResponse({
+                        "ResultCode": "0",
+                        "ResultDesc": "Accepted"
+                    })
 
-            
             except:
                 return JsonResponse({
                     "ResultCode": "C2B00012",
@@ -1373,7 +1377,7 @@ def show_and_delete_messages(request):
 
 @csrf_exempt
 def send_payment_confirmation_email(request, to_email, order_id):
-    
+
     order = CartOrder.objects.get(oid=order_id)
     print(order, "inside email")
     """
@@ -1402,7 +1406,7 @@ def send_payment_confirmation_email(request, to_email, order_id):
 def send_payment_confirmation_mail( to_email, order_id ):
     
     order = CartOrder.objects.get(oid=order_id)
-    send_sms(order.phone,order.oid,order.price)
+    send_sms_after_payment(order.phone,order.oid,order.price)
     print(order, "inside email")
     """
     Send a payment confirmation email to the client using Django's email service
@@ -1693,3 +1697,32 @@ def get_currency_rate(request, country_name):
     except requests.exceptions.RequestException as e:
         print(f"CurrencyFreaks API Error: {e}")
         return JsonResponse({'success': False, 'message': 'API request failed'}, status=500)
+
+def check_order_status(request, oid):
+    try:
+        # Fetch the order by its order ID (oid)
+        order = get_object_or_404(CartOrder, oid=oid)
+
+        # Perform any necessary checks here (e.g., whether the order is complete)
+        # Assuming there's a field `is_paid` in the Order model to check payment status
+        if order.paid_status:
+            return JsonResponse({
+                'success': True,
+                'message': 'Order has been successfully completed.',
+                'order_details': {
+                    'order_id': order.oid,
+                    'amount': order.price,
+                    'order_date': order.order_date.strftime('%Y-%m-%d'),
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Order has not been completed yet. Please complete payment.'
+            })
+
+    except CartOrder.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Order not found. Please check the order number and try again.'
+        })
