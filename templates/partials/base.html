@@ -296,15 +296,17 @@
                         <div class="header-action-right">
                             <div class="header-action-2">
                                 <div class="search-location">
-                                    <form action="#">
-                                        <select class="select-active">
-                                            <option>{{ user_country|default:"Your Location" }}</option>
+                                    <form method="POST" action="{% url 'core:set_currency' %}" id="currency-form">
+                                        <select name="country" class="select-active" onchange="setCurrency(this)">
+                                            <option value="">{{ user_country|default:"Your Location" }}</option>
                                             {% for country in countries %}
-                                                <option>{{ country }}</option>
+                                                <option >{{ country.name }}</option>
                                             {% endfor %}
                                         </select>
-                                    </form>
+                                    </form>                                                                      
                                 </div>
+                                <div id="success-message" style="display:none; color: green;"></div>
+                                <div id="error-message" style="display:none; color: red;"></div>
                                 {% comment %} HEADER ACTIONS {% endcomment %}
                                 <div class="header-action-icon-2">
                                     <a href="{% url 'core:compare_products' %}">
@@ -984,6 +986,35 @@
 
     <script src="https://cdn.jsdelivr.net/npm/currency-symbol-map@5.0.4/lib/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <script>
+        function setCurrency(selectElement) {
+            const country = selectElement.value;
+            const formData = new FormData();
+            formData.append('country', country);
+    
+            $.ajax({
+                url: "{% url 'core:set_currency' %}",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        $("#success-message").text(response.success).show();
+                        $("#error-message").hide();
+                    } else if (response.error) {
+                        $("#error-message").text(response.error).show();
+                        $("#success-message").hide();
+                    }
+                },
+                error: function() {
+                    $("#error-message").text("An error occurred. Please try again.").show();
+                    $("#success-message").hide();
+                }
+            });
+        }
+    </script>
     <script>
         // Function to replace all $ symbols in text with the current currency symbol
         function replaceDollarSymbols(currencySymbol) {

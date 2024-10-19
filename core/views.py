@@ -13,7 +13,7 @@ from requests import session
 from requests.auth import HTTPBasicAuth
 import requests
 from taggit.models import Tag
-from core.models import Coupon, DealOfTheDay, MpesaTransaction, Product, Category, ProductComparison, Vendor, CartOrder, CartOrderProducts, ProductImages, ProductReview, wishlist_model, Address
+from core.models import Country, Coupon, DealOfTheDay, MpesaTransaction, Product, Category, ProductComparison, Vendor, CartOrder, CartOrderProducts, ProductImages, ProductReview, wishlist_model, Address
 from userauths.models import ContactUs, Profile
 from core.forms import ProductReviewForm, MpesaPaymentForm
 from django.template.loader import render_to_string
@@ -83,6 +83,7 @@ def index(request):
     tags = Tag.objects.all().order_by("-id")[:6]
 
     countries = getattr(request, 'countries', [])
+    print(countries, "country data")
 
     context = {
         "products": products,
@@ -101,6 +102,26 @@ def index(request):
     }
 
     return render(request, 'core/index.html', context)
+
+@csrf_exempt
+def set_currency(request):
+    if request.method == 'POST':
+        country_name = request.POST.get('country')
+        if country_name:  # Ensure a country was selected
+            try:
+                country = Country.objects.get(name=country_name)
+                request.session['user_currency_code'] = country.currency.code
+                request.session['user_exchange_rate'] = float(country.currency.exchange_rate_to_usd)
+                return JsonResponse({"success": "Currency set successfully"})
+            except Country.DoesNotExist:
+                pass  # Optionally handle this case
+        else:  
+        # Fallback to default currency if country not found or not selected
+            request.session['user_currency_code'] = 'USD'
+            request.session['user_exchange_rate'] = 1.0
+            return JsonResponse({"success": "Currency set to default (USD)"})
+
+    return JsonResponse({"error": "Invalid request"}, status=400)
 
 
 def product_list_view(request):
