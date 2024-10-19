@@ -4,7 +4,7 @@ from django.utils.deprecation import MiddlewareMixin
 from django.contrib.gis.geoip2 import GeoIP2
 import requests
 from .utils import get_client_ip
-from .models import Product
+from .models import Country, Currency, Product
 
 class LocationMiddleware(MiddlewareMixin):
     def process_request(self, request):
@@ -30,57 +30,33 @@ class LocationMiddleware(MiddlewareMixin):
         else:
             request.session['location'] = None
 
-CURRENCY_API_URL = 'https://api.currencyfreaks.com/v2.0/rates/latest'
+# CURRENCY_API_URL = 'https://api.currencyfreaks.com/v2.0/rates/latest'
 
 class CurrencyMiddleware(MiddlewareMixin):
     def process_request(self, request):
         location = request.session.get('location', None)
         user_country = request.session.get('location', {}).get('country_name', None) if location else "default"
+        print("Inside currency middleware")
 
         if not user_country:
             user_country = "default"
         print(user_country, "country middleware")
 
-        # Find the currency based on the user’s country
-        for entry in country_to_currency_data:
-            if entry['country'] == user_country:
-                user_currency_code = entry['currency_code']
-                break
-        else:
-            user_currency_code = 'USD'
-        
-        print("Currency:", user_currency_code)
-
-        request.user_currency_code = user_currency_code
-        if user_currency_code:
-            request.session['user_currency_code'] = user_currency_code
-        else:
-            request.session['user_currency_code'] = None
-
-        api_key = settings.CURRENCYFREAKS_API_KEY
-
         try:
-            response = requests.get(CURRENCY_API_URL, params={'apikey': api_key})
-            data = response.json()
+            # Get the country and its associated currency from the database
+            country = Country.objects.get(name=user_country)
+            print(country, "Country from db")
+            user_currency = country.currency
+            
+        except Country.DoesNotExist:
+            # Fallback to USD if the country is not found
+            user_currency = Currency.objects.get(code='USD')
 
-            if response.status_code == 200 and 'rates' in data:
-                rates = data.get('rates', {})
-                user_exchange_rate = float(rates.get(user_currency_code, 1.0))  # Default to 1.0 if rate not found
-                print("Exchange rate:", user_exchange_rate)
-                request.user_exchange_rate = user_exchange_rate
-                request.session['user_exchange_rate'] = user_exchange_rate
-            else:
-                user_exchange_rate = 1.0  # Default to 1.0 if API call fails
+        print("Currency:", user_currency.code)
 
-        except requests.exceptions.RequestException as e:
-            print(f"CurrencyFreaks API Error: {e}")
-            user_exchange_rate = 1.0  # Default to 1.0 on error
-
-        # Store the exchange rate in the session
-        if user_country:
-            request.session['user_country'] = user_country
-        else:
-            request.session['user_country'] = None
+        request.user_currency_code = user_currency.code
+        request.session['user_currency_code'] = user_currency.code
+        request.session['user_exchange_rate'] = float(user_currency.exchange_rate_to_usd)
 
         # Now handle the product price conversion
         products = Product.objects.filter(product_status="published", featured=True)
@@ -88,8 +64,8 @@ class CurrencyMiddleware(MiddlewareMixin):
         product_old_prices_in_session = {}
 
         for product in products:
-            converted_price = product.price * Decimal(user_exchange_rate)
-            converted_old_price = product.old_price * Decimal(user_exchange_rate)
+            converted_price = product.price *    Decimal(user_currency.exchange_rate_to_usd)
+            converted_old_price = product.old_price * Decimal(user_currency.exchange_rate_to_usd)
             product_prices_in_session[product.id] = float(converted_price)
             product_old_prices_in_session[product.id] = float(converted_old_price)
 
@@ -97,13 +73,7 @@ class CurrencyMiddleware(MiddlewareMixin):
         request.session['converted_product_prices'] = product_prices_in_session
         request.session['converted_old_price'] = product_old_prices_in_session
 
-        request.countries = [entry['country'] for entry in country_to_currency_data]
-        
-        country = request.session.get('country', None)
-        print(country)
-
-
-        print("Converted Prices Stored in Session")
+        request.countries = Country.objects.values_list('name', flat=True)
 
 
 country_to_currency_data = [
