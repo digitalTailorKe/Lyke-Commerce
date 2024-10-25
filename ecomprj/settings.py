@@ -78,7 +78,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.LocationMiddleware',
-    'core.middleware.CurrencyMiddleware',
 ]
 
 ROOT_URLCONF = 'ecomprj.urls'

@@ -6,74 +6,102 @@ import requests
 from .utils import get_client_ip
 from .models import Country, Currency, Product
 
+
 class LocationMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        # Step 1: Get the user's IP address
-        ip_address = get_client_ip(request)
-        print(ip_address, "sysysy")
+        # Step 1: Check if the user has manually set a preferred country
+        request.countries = Country.objects.values_list('name', flat=True)
+        if 'user_selected_country' in request.session:
+            # Use the manually selected country
+            user_country = request.session['user_selected_country']
+            request.session['user_country'] = user_country
+            try:
+                country = Country.objects.get(name=user_country)
+                request.session['user_currency_code'] = country.currency.code
+                request.session['user_exchange_rate'] = float(country.currency.exchange_rate_to_usd)
+            except Country.DoesNotExist:
+                # Default to USD if country not found
+                request.session['user_currency_code'] = 'USD'
+                request.session['user_exchange_rate'] = 1.0
+            return  # Skip IP-based location since a manual selection exists
 
-        # Step 2: Get location details using GeoIP2
+        # Step 2: Proceed with IP-based location detection if no manual selection
+        ip_address = get_client_ip(request)
         g = GeoIP2()
         try:
-            location = g.city(ip_address)  # You can also use g.country(ip_address) if only country is needed
-            print(location, 'gfhfc')
+            location = g.city(ip_address)
         except Exception:
             location = None
 
         # Step 3: Attach location data to the request object or store it in session
         request.location = location
-        print(location, "location")
-
-        # Optional: Store the location in the session for reuse in multiple views
         if location:
             request.session['location'] = location
+            request.session['user_country'] = location.get('country_name', 'Unknown')
+
+            # Fetch and set currency based on the detected country
+            try:
+                country = Country.objects.get(name=request.session['user_country'])
+                request.session['user_currency_code'] = country.currency.code
+                request.session['user_exchange_rate'] = float(country.currency.exchange_rate_to_usd)
+            except Country.DoesNotExist:
+                # Default to USD if country not found
+                request.session['user_currency_code'] = 'USD'
+                request.session['user_exchange_rate'] = 1.0
         else:
+            # Set default if location is not found
             request.session['location'] = None
+            request.session['user_country'] = 'Unknown'
+            request.session['user_currency_code'] = 'USD'
+            request.session['user_exchange_rate'] = 1.0
+
+        # Store the available countries in the session for the dropdown
+
 
 # CURRENCY_API_URL = 'https://api.currencyfreaks.com/v2.0/rates/latest'
 
-class CurrencyMiddleware(MiddlewareMixin):
-    def process_request(self, request):
-        location = request.session.get('location', None)
-        user_country = request.session.get('location', {}).get('country_name', None) if location else "default"
-        print("Inside currency middleware")
+# class CurrencyMiddleware(MiddlewareMixin):
+#     def process_request(self, request):
+#         location = request.session.get('location', None)
+#         user_country = request.session.get('location', {}).get('country_name', None) if location else "default"
+#         print("Inside currency middleware")
 
-        if not user_country:
-            user_country = "default"
-        print(user_country, "country middleware")
+#         if not user_country:
+#             user_country = "default"
+#         print(user_country, "country middleware")
 
-        try:
-            # Get the country and its associated currency from the database
-            country = Country.objects.get(name=user_country)
-            print(country, "Country from db")
-            user_currency = country.currency
+#         try:
+#             # Get the country and its associated currency from the database
+#             country = Country.objects.get(name=user_country)
+#             print(country, "Country from db")
+#             user_currency = country.currency
             
-        except Country.DoesNotExist:
-            # Fallback to USD if the country is not found
-            user_currency = Currency.objects.get(code='USD')
+#         except Country.DoesNotExist:
+#             # Fallback to USD if the country is not found
+#             user_currency = Currency.objects.get(code='USD')
 
-        print("Currency:", user_currency.code)
+#         print("Currency:", user_currency.code)
 
-        request.user_currency_code = user_currency.code
-        request.session['user_currency_code'] = user_currency.code
-        request.session['user_exchange_rate'] = float(user_currency.exchange_rate_to_usd)
+#         request.user_currency_code = user_currency.code
+#         request.session['user_currency_code'] = user_currency.code
+#         request.session['user_exchange_rate'] = float(user_currency.exchange_rate_to_usd)
 
-        # Now handle the product price conversion
-        products = Product.objects.filter(product_status="published", featured=True)
-        product_prices_in_session = {}
-        product_old_prices_in_session = {}
+#         # Now handle the product price conversion
+#         products = Product.objects.filter(product_status="published", featured=True)
+#         product_prices_in_session = {}
+#         product_old_prices_in_session = {}
 
-        for product in products:
-            converted_price = product.price *    Decimal(user_currency.exchange_rate_to_usd)
-            converted_old_price = product.old_price * Decimal(user_currency.exchange_rate_to_usd)
-            product_prices_in_session[product.id] = float(converted_price)
-            product_old_prices_in_session[product.id] = float(converted_old_price)
+#         for product in products:
+#             converted_price = product.price *    Decimal(user_currency.exchange_rate_to_usd)
+#             converted_old_price = product.old_price * Decimal(user_currency.exchange_rate_to_usd)
+#             product_prices_in_session[product.id] = float(converted_price)
+#             product_old_prices_in_session[product.id] = float(converted_old_price)
 
-        # Store converted prices in the session
-        request.session['converted_product_prices'] = product_prices_in_session
-        request.session['converted_old_price'] = product_old_prices_in_session
+#         # Store converted prices in the session
+#         request.session['converted_product_prices'] = product_prices_in_session
+#         request.session['converted_old_price'] = product_old_prices_in_session
 
-        request.countries = Country.objects.values_list('name', flat=True)
+#         request.countries = Country.objects.values_list('name', flat=True)
 
 
 country_to_currency_data = [

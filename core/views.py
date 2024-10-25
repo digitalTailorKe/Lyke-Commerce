@@ -38,18 +38,22 @@ from .middleware import country_to_currency_data
 
 
 def index(request):
+
+    if 'country' in request.POST:
+      country_name = request.POST.get('country')
+      print(country_name, 'Counrty in request')
+      set_currency(request, country_name=country_name)
+
     cart_data = request.session.get('cart_data_obj', {})
     compared_items = request.session.get('comparison', [])
 
     # Fetch location and currency details from the request
-    user_location = getattr(request, 'location', {}) or {}
-    current_currency = getattr(request, 'user_currency_code', 'USD')
-    current_currency_rate = getattr(request, 'user_exchange_rate', 1.0)
+    user_country = request.session.get('user_country', 'Unknown')
+    current_currency = request.session.get('user_currency_code', 'USD')
+    current_currency_rate = request.session.get('user_exchange_rate', 1.0)
 
     print(current_currency, 'index view')
     print(current_currency_rate, 'index view')
-
-    user_country = user_location.get('country_name', 'Unknown')
 
     if request.user.is_authenticated:
         comparison = ProductComparison.objects.filter(user=request.user).first()
@@ -105,24 +109,22 @@ def index(request):
 
 @csrf_exempt
 def set_currency(request):
-    if request.method == 'POST':
-        country_name = request.POST.get('country')
-        if country_name:  # Ensure a country was selected
-            try:
-                country = Country.objects.get(name=country_name)
-                request.session['user_currency_code'] = country.currency.code
-                request.session['user_exchange_rate'] = float(country.currency.exchange_rate_to_usd)
-                return JsonResponse({"success": "Currency set successfully"})
-            except Country.DoesNotExist:
-                pass  # Optionally handle this case
-        else:  
-        # Fallback to default currency if country not found or not selected
-            request.session['user_currency_code'] = 'USD'
-            request.session['user_exchange_rate'] = 1.0
-            return JsonResponse({"success": "Currency set to default (USD)"})
+    country_name = request.POST.get('country')  # Access data from request.POST
+    print(country_name, 'Country_name')
 
-    return JsonResponse({"error": "Invalid request"}, status=400)
-
+    if country_name:
+        try:
+            country = Country.objects.get(name=country_name)
+            request.session['user_selected_country'] = country_name  # Save preferred country
+            request.session['user_currency_code'] = country.currency.code
+            request.session['user_exchange_rate'] = float(country.currency.exchange_rate_to_usd)
+            return JsonResponse({"success": "Currency set successfully"})
+        except Country.DoesNotExist:
+            return JsonResponse({"error": "Country not found"})
+    else:
+        request.session['user_currency_code'] = 'USD'
+        request.session['user_exchange_rate'] = 1.0
+        return JsonResponse({"success": "Currency set to default (USD)"})
 
 def product_list_view(request):
     
