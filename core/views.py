@@ -379,7 +379,8 @@ def cart_view(request):
                 # Log the error or handle the case where the conversion failed
                 messages.error(request, f"Invalid price or quantity for item {item.get('title', 'Unknown Item')}")
                 continue
-
+        print("\n\n\n ", request.session['cart_data_obj'] , "\n\n\n")
+        print("\n\n\n ", cart_total_amount , "\n\n\n")
         return render(request, "core/cart.html", {
             "cart_data": request.session['cart_data_obj'],
             'totalcartitems': len(request.session['cart_data_obj']),
@@ -423,7 +424,7 @@ def update_cart(request):
             cart_total_amount += int(item['qty']) * float(item['price'])
 
     context = render_to_string("core/async/cart-list.html", {"cart_data":request.session['cart_data_obj'], 'totalcartitems': len(request.session['cart_data_obj']), 'cart_total_amount':cart_total_amount})
-    return JsonResponse({"data": context, 'totalcartitems': len(request.session['cart_data_obj'])})
+    return JsonResponse({"cart_data":request.session['cart_data_obj'],"data": context, 'totalcartitems': len(request.session['cart_data_obj'])})
 
 @csrf_exempt
 def save_checkout_info(request):
@@ -515,7 +516,7 @@ def save_checkout_info(request):
 
 
             send_payment_confirmation_email(request, to_email=email, order_id=order.oid)
-            send_sms(mobile, order.oid, total_amount)
+            send_sms_confirmation(mobile, order.oid)
 
           
         return redirect("core:checkout", order.oid)
@@ -525,13 +526,32 @@ def save_checkout_info(request):
 africastalking.initialize(settings.AFRICASTALKING_USERNAME, settings.AFRICASTALKING_API_KEY)
 sms = africastalking.SMS
 
-def send_sms(phone_number, order, price):
+def send_sms_after_payment(phone_number, order, price):
 
     if not phone_number.startswith('+'):
         phone_number = f'+{phone_number}'
         print(phone_number)
 
     message = f"Dear customer, your payment of {price} for order {order} has been received successfully. Thank you for shopping with us!"
+    sender = "Lyke Enterprise LTD"
+    sender_id = "43435"
+
+    try:
+        # Send the SMS using AfricasTalking SMS service
+        response = sms.send(message, [phone_number])
+        print(f"SMS sent successfully: {response}")
+        return {"message": "SMS sent successfully", "response": response}
+    except Exception as e:
+        print(f"Failed to send SMS: {e}")
+        return {"error": str(e)}
+
+def send_sms_confirmation(phone_number, order):
+
+    if not phone_number.startswith('+'):
+        phone_number = f'+{phone_number}'
+        print(phone_number)
+
+    message = f"Dear customer, your order {order} has been received successfully. Thank you for shopping with us!"
     sender = "Lyke Enterprise LTD"
     sender_id = "43435"
 
@@ -572,7 +592,7 @@ def create_checkout_session(request, oid):
         line_items = [
             {
                 'price_data': {
-                    'currency': 'USD',
+                    'currency': request.user_currency_code,
                     'product_data': {
                         'name': order.full_name
                     },
@@ -582,8 +602,8 @@ def create_checkout_session(request, oid):
             }
         ],
         mode = 'payment',
-        success_url = request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid])) + "?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url = request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid]))
+        success_url = request.build_absolute_uri(f"/payment-completed/{order.oid}/"),
+        cancel_url = request.build_absolute_uri("/payment-failed/")
     )
 
     order.paid_status = False
@@ -642,7 +662,6 @@ def checkout(request, oid):
 
 
 
-
 # @login_required
 def payment_completed_view(request, oid):
     order = CartOrder.objects.get(oid=oid)
@@ -650,6 +669,7 @@ def payment_completed_view(request, oid):
     if order.paid_status == False:
         order.paid_status = True
         order.save()
+    send_payment_confirmation_mail(order.email,order.oid)
         
     context = {
         "order": order,
@@ -916,7 +936,7 @@ def query_mpesa_payment(request):
         
             transaction.save()
             
-            print(order.balance, "found order")
+            # print(order.balance, "found order")
             
             
             
@@ -1010,6 +1030,11 @@ def mpesa_callback(request):
                             order.paid_status = True
                             
                             order.save()
+                            print("here")
+                            send_payment_confirmation_mail(order.email,order.oid)
+                            print("after here")
+
+
                         else:
                             print("order not found")
                         
@@ -1096,7 +1121,7 @@ def lipa_na_mpesa_online(request):
                 "PartyA": phone_number,
                 "PartyB": business_short_code,
                 "PhoneNumber": phone_number,
-                "CallBackURL": "https://6398-2c0f-2a80-10d6-3010-b8a3-2dc9-82a9-91ff.ngrok-free.app/mpesa/callback/",
+                "CallBackURL": "https://dc53-2409-4072-ebf-8658-cd16-f006-9df0-bab0.ngrok-free.app/mpesa/callback/",
                 "AccountReference": order_id,
                 "TransactionDesc": "Payment for XYZ"
             }
@@ -1353,6 +1378,17 @@ def valid(request):
 #         print(f"Failed to send SMS: {e}")
 #         # Return the exception as a string in a dictionary
 #         return JsonResponse({"error": str(e)})
+from django.views.decorators.http import require_POST
+@require_POST
+def show_and_delete_messages(request):
+    messages_list = []
+    for message in messages.get_messages(request):
+        messages_list.append({
+            'level': message.level,
+            'message': message.message,
+        })
+
+    return JsonResponse({'messages': messages_list})
 
 @csrf_exempt
 def send_payment_confirmation_email(request, to_email, order_id):
@@ -1380,6 +1416,35 @@ def send_payment_confirmation_email(request, to_email, order_id):
         print(f"Email sent successfully to {to_email}")
     except Exception as e:
         print(f"Failed to send email: {e}")
+
+
+def send_payment_confirmation_mail( to_email, order_id ):
+    
+    order = CartOrder.objects.get(oid=order_id)
+    send_sms_after_payment(order.phone,order.oid,order.price)
+    print(order, "inside email")
+    """
+    Send a payment confirmation email to the client using Django's email service
+    """
+    subject = "Payment Confirmation"
+    from_email = settings.DEFAULT_FROM_EMAIL
+    print(to_email)
+    print(f"Sending email from: {from_email}")
+
+    # HTML content (email body)
+    html_content = render_to_string("email/payment_confirmation.html", {
+        'order': order,  # You can pass any variables you want to the template
+    })
+
+    # Sending the email with both plain text and HTML versions
+    try:
+        email = EmailMultiAlternatives(subject, html_content, from_email, [to_email])
+        email.content_subtype = "html"  # Main content is now HTML
+        email.send()
+        print(f"Email sent successfully to {to_email}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        
         
         
 @csrf_exempt  # This is just to allow the view to accept requests without CSRF token, remove in production or secure with a CSRF token

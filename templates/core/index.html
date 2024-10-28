@@ -99,19 +99,55 @@
             }
 
 
+
         </style>
    </head>
 
+<script>
+    function addToCart(quantity, product_id,product_pid,product_image,product_title,product_price ) {
+        
+        console.log("Quantity:", quantity);
+        console.log("Title:", product_title);
+        console.log("Price:", product_price);
+        console.log("ID:", product_id);
+        console.log("PID:", product_pid);
+        console.log("Image:", product_image);
+    
+        $.ajax({
+            url: '/add-to-cart',
+            
+            data: {
+                'id': product_id,
+                'pid': product_pid,
+                'image': product_image,
+                'qty': quantity,
+                'title': product_title,
+                'price': product_price,
+            },
+            dataType: 'json',
+            beforeSend: function(){
+                console.log("Adding Product to Cart...");
+            },
+            success: function(response){
+                // this_val.html("✓")
+                this_val.html("<i class='fas fa-check-circle'></i>")
 
-    <main class="main" style="margin:0 5%;">
-        {% if filter_products %}
+                console.log("Added Product to Cart!");
+                $(".cart-items-count").text(response.totalcartitems)
+    
+    
+            }
+        })
+    }
+</script>
+    <div class="container-xxl">
+       
         <section class="compare-products compare-products-section">
             {% include 'core/comparison_section.html' %}
-            
         </section>
         
-        {% endif %}
-        <div class="container mb-30">
+    
+        <div class="container-xxl mb-30">
             <div class="row flex-row-reverse">
                 <div class="col-lg-4-5">
                     <section class="home-slider position-relative mb-30">
@@ -147,29 +183,32 @@
                     </section>
                     <!--End hero-->
                     <section class="product-tabs section-padding position-relative">
-                        <div class="section-title style-2">
+                        <div>
                             <h3>Popular Products</h3>
-                            <ul class="nav nav-tabs links" id="myTab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="nav-tab-all" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab" aria-controls="tab-all" aria-selected="true">All</button>
-                                </li>
-                                {% for category in categories %}
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="nav-tab-{{ category.id }}" data-bs-toggle="tab" data-bs-target="#tab-{{ category.id }}" type="button" role="tab" aria-controls="tab-{{ category.id }}" aria-selected="false">{{ category.title }}</button>
-                                    </li>
-                                {% endfor %}
-                            </ul>
                         </div>
+
+                        <ul class="nav nav-tabs links" id="myTab" role="tablist">
+                            <li class="nav-item" style="margin-top: 10px;" role="presentation">
+                                <button class="nav-link active" id="nav-tab-all" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab" aria-controls="tab-all" aria-selected="true">All</button>
+                            </li>
+                            {% for category in categories %}
+                                <li class="nav-item" style="margin-top: 10px;" role="presentation">
+                                    <button class="nav-link" id="nav-tab-{{ category.id }}" data-bs-toggle="tab" data-bs-target="#tab-{{ category.id }}" type="button" role="tab" aria-controls="tab-{{ category.id }}" aria-selected="false">{{ category.title }}</button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <br>
+                        <br>
                         <!--End nav-tabs-->
                         
                         <div class="tab-content" id="myTabContent">
                             <!-- Tab for All products -->
                             <div class="tab-pane fade show active" id="tab-all" role="tabpanel" aria-labelledby="tab-all">
-                                <div class="row flex product-grid-4" id="filtered-product">
+                                <div class="row product-grid-4" id="filtered-product">
                                     {% for category, products in categorized_products.items %}
                                         {% for p in products %}
-                                            <div class="" style="width: 31%">
-                                                <div class="product-cart-wrap mb-30">
+                                            <div class="col-12 col-sm-6 col-md-4 mb-30">  <!-- Changed to use Bootstrap columns -->
+                                                <div class="product-cart-wrap">
                                                     <div class="product-img-action-wrap">
                                                         <div class="product-img product-img-zoom">
                                                             <a href="{% url 'core:product-detail' p.pid %}">
@@ -201,14 +240,10 @@
                                                         <div class="product-card-bottom">
                                                             <div class="product-price">
                                                                 <span>{{ current_currency }}
-                                                                    {% with price=converted_product_prices|get_item:p.id %}
-                                                                        {{ price|floatformat:2|default:"N/A" }}
-                                                                    {% endwith %}   
+                                                                    {% with price=converted_product_prices|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}   
                                                                 </span>
                                                                 <span class="old-price">{{ current_currency }} 
-                                                                    {% with price=converted_old_price|get_item:p.id %}
-                                                                        {{ price|floatformat:2|default:"N/A" }}
-                                                                    {% endwith %}
+                                                                    {% with price=converted_old_price|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}
                                                                 </span>
                                                             </div>
                                                             <div class="add-cart">
@@ -217,7 +252,8 @@
                                                                 <input type="hidden" class="product-image-{{ p.id }}" value="{{ p.image.url }}">
                                                                 <input type="hidden" class="product-id-{{ p.id }}" value="{{ p.id }}">
                                                                 <input type="hidden" class="product-title-{{ p.id }}" value="{{ p.title }}">
-        
+                                                                <input type="hidden" class="current-product-price-{{ p.id }}" value="{{ converted_product_prices|get_item:p.id }}">
+                                
                                                                 <div class="d-flex bottom-action">
                                                                     <button class="add add-to-cart-btn" data-index="{{ p.id }}" style="border: none;" id="add-to-cart-btn">
                                                                         {% if p.id|stringformat:"s" in cart_data %}
@@ -227,7 +263,7 @@
                                                                         {% endif %}
                                                                     </button>
                                                                     <button style="border: none; background: none;" class="add-to-wishlist" data-product-item="{{p.id}}"
-                                                                      data-toggle="popover" data-content="Wishlist" data-placement="top">
+                                                                        data-toggle="popover" data-content="Wishlist" data-placement="top">
                                                                         <i class="fi-rs-heart" style="fill: aqua;"></i>
                                                                     </button>
                                                                     <button style="border: none; background: none;" class="compare-products action-btn" 
@@ -245,7 +281,6 @@
                                                 </div>
                                             </div>
                                         {% endfor %}
-                                    
                                     {% endfor %}
                                 </div>
                             </div>
@@ -391,8 +426,9 @@
                                                     <input type="hidden" class="product-image-{{ deal.product.id }}" value="{{ deal.product.image.url }}">
                                                     <input type="hidden" class="product-id-{{ deal.product.id }}" value="{{ deal.product.id }}">
                                                     <input type="hidden" class="product-title-{{ deal.product.id }}" value="{{ deal.product.title }}">
+                                                    <input type="hidden" class="current-product-price-{{ deal.product.id }}" value="{{ deal.get_discounted_price}}">
                                                     
-                                                    <button class="add add-to-cart-btn" data-index="{{ deal.product.id }}" style="border: none;" id="add-to-cart-btn">
+                                                    <button  onclick="addToCart(1, '{{ deal.product.id }}','{{ deal.product.pid }}','{{ deal.product.image.url }}','{{ deal.product.title }}','{{deal.get_discounted_price}}' )" data-index="{{ deal.product.id }}" style="border: none;" id="add-to-cart-btn">
                                                         {% if deal.product.id|stringformat:"s" in cart_data %}
                                                             <i class='fas fa-check-circle'></i>
                                                         {% else %}
@@ -561,8 +597,10 @@
                     </div>
             </div>
         </div>
+
+        
         <section class="popular-categories section-padding">
-            <div class="container">
+            <div class="container-xxl">
                 <div class="section-title">
                     <div class="title">
                         <h3>Shop by Categories</h3>
@@ -666,7 +704,7 @@
         </section>
         <!--End category slider-->
         <section class="section-padding mb-30">
-            <div class="container">
+            <div class="container-xxl">
                 <div class="row">
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-sm-5 mb-md-0">
                         <h4 class="section-title style-1 mb-30 animated animated">Top Selling</h4>
@@ -932,7 +970,7 @@
             </div>
         </section>
         <!--End 4 columns-->
-    </main>
+    </div>
 
     
 
@@ -941,6 +979,7 @@
     <script src="{% static 'assets/js/function.js' %}"></script>
     
     <script>
+
         $(".compare-products").on("click", function() {
 
             let this_val = $(this); // Current button element
@@ -966,13 +1005,12 @@
                         console.log("Product added to compare list!"); // Log on success
                         $(".compare_count").text(response.total_comparison_items)
                         // Optionally, change the button UI to indicate success
-                        this_val.html("<i class='fas fa-check-circle'></i>");
-                        
-                        $(".compare-products-section").html(response.comparison_html);
-                        window.location.reload();
-                        // Update the compare counter
-                        updateCompareCounter();
 
+                        this_val.html("<i class='fas fa-check-circle'></i>");
+                        $(".compare-products-section").html(response.comparison_html);
+                        
+                        updateCompareCounter();
+                        fetchAndDisplayMessages();
                         refreshDOM();
                     }
                 }
@@ -986,8 +1024,10 @@
                 dataType: 'json',
                 success: function(data) {
                     // Update the compare counter with the new count
-                    $(".compare-counter").text(data.compare_count);
-                    console.log("Compare counter updated:", data.compare_count); // Log new count
+                    $(".compare_count").text(data.compare_count);
+                    console.log("Compare counter updated:", data.compare_count);
+                    
+                    refreshDOM();// Log new count
                 }
             });
         }
@@ -995,9 +1035,9 @@
 
         $(document).ready(function(){
             $('[data-toggle="popover"]').popover({
-                trigger: 'hover', // Popover shows on hover
-                html: true,       // If you want HTML content inside the popover
-            });
+              trigger: 'hover', // Popover shows on hover
+               html: true,       // If you want HTML content inside the popover
+           });
         });
 
         function refreshDOM() {
@@ -1013,12 +1053,24 @@
         
         }
 
+        function checkAndClearCompareSection() {
+            let compareSection = $('.compare-products-section');  // Select the section that wraps everything
+            let compareRow = compareSection.find('.row');  // Select the row inside the section
+            let products = compareRow.children('.col-lg-4');  // Select all product cards inside the row
+        
+            if (products.length === 0) {
+                compareSection.empty();  // Remove the entire row if no products are left
+                // Optionally, you can hide the whole compare section if you don't want to show a message:
+                // compareSection.hide();  // Uncomment this line to hide the whole section
+            }
+        }
+        
 
         $(document).on('click', '.remove-btn', function(e) {
             e.preventDefault();  // Prevent the default action (i.e., page reload)
-        
             let removeUrl = $(this).attr('href');  // Get the URL for removing the product
-        
+            let productElement = $(this).closest('.col-lg-4');
+            console.log(removeUrl)
             $.ajax({
                 url: removeUrl,  // URL to send the remove request
                 method: 'POST',  // Use POST method
@@ -1027,9 +1079,15 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        window.location.reload();  // Refresh the comparison table
-                        $(".compare-counter").text(response.total_comparison_items);  // Update counter
+                    console.log("runs success")
+                    productElement.remove(); 
+
+                    updateCompareCounter();
+                    checkAndClearCompareSection()
+
+                    refreshDOM(); // Update counter
                     } else {
+
                         alert("There was an error removing the product.");
                     }
                 },
