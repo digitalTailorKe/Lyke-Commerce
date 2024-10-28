@@ -1489,6 +1489,7 @@ def add_to_comparison(request, product_id):
         total_comparison_items = comparison.products.count()
         
         print("Added product to user's comparison list")
+        messages.success(request, "Successfuly added product to comparison")
     else:
         # For non-authenticated users, handle comparison via session
         comparison = request.session.get('comparison', [])
