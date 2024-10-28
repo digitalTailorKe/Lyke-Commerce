@@ -1504,18 +1504,18 @@ def add_to_comparison(request, product_id):
         print(total_comparison_items)
 
         # Fetch updated filter_products after adding the new product
-        if request.user.is_authenticated:
-            comparison = ProductComparison.objects.filter(user=request.user).first()
-            filter_products = comparison.products.all() if comparison else []
-        else:
-            product_ids = request.session.get('comparison', [])
-            filter_products = Product.objects.filter(id__in=product_ids)
+    if request.user.is_authenticated:
+        comparison = ProductComparison.objects.filter(user=request.user).first()
+        filter_products = comparison.products.all() if comparison else []
+    else:
+        product_ids = request.session.get('comparison', [])
+        filter_products = Product.objects.filter(id__in=product_ids)
 
-    # Render the comparison section HTML
-        comparison_html = render_to_string('core/comparison_section.html', {
-            'filter_products': filter_products
-        })
-        print(comparison_html)
+# Render the comparison section HTML
+    comparison_html = render_to_string('core/comparison_section.html', {
+        'filter_products': filter_products
+    })
+    print(comparison_html)
     # Return success response along with the total number of items in comparison
     return JsonResponse({
         'success': True,
