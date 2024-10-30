@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.management import call_command
 from core.models import CartOrderProducts, Country, Coupon, Currency, DealOfTheDay, Product, Category, Vendor, CartOrder, ProductImages, ProductReview, wishlist_model, Address, MpesaTransaction
 
 class ProductImagesAdmin(admin.TabularInline):
@@ -56,6 +57,17 @@ class DealOfTheDayAdmin(admin.ModelAdmin):
     get_discounted_price.short_description = 'Discounted Price'
 
 class CurrencyAdmin(admin.ModelAdmin):
+    actions = ["seed_database"]
+
+    def seed_database(self, request, queryset):
+        try:
+            call_command("seed_countries_and_currency")
+            self.message_user(request, "Database seeded successfully.", messages.SUCCESS)
+        except Exception as e:
+            self.message_user(request, f"Error seeding database: {e}", messages.ERROR)
+
+    seed_database.short_description = "Seed database with initial data"
+
     list_display = ('name', 'code', 'symbol', 'exchange_rate_to_usd')
     search_fields = ('name', 'code')
     list_filter = ('code',)
