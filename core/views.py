@@ -50,7 +50,7 @@ def index(request):
     # Fetch location and currency details from the request
     user_country = request.session.get('user_country', 'Unknown')
     current_currency = request.session.get('user_currency_code', 'USD')
-    current_currency_rate = request.session.get('user_exchange_rate', 1.0)
+    current_currency_rate = Decimal(request.session.get('user_exchange_rate', 1.0))
 
     print(current_currency, 'index view')
     print(current_currency_rate, 'index view')
@@ -80,6 +80,24 @@ def index(request):
     converted_product_prices = request.session.get('converted_product_prices', {})
     converted_old_price = request.session.get('converted_old_price', {})
 
+    for product in products:
+        # Convert the current product price and store it
+        converted_price = product.price * current_currency_rate
+        converted_old_price_value = product.old_price * current_currency_rate if product.old_price else None
+
+        # Store the converted prices in the dictionary (or session, depending on the need)
+        converted_product_prices[product.id] = float(round(converted_price, 2))
+        if converted_old_price_value:
+            converted_old_price[product.id] = float(round(converted_old_price_value, 2))
+
+    # Store the converted prices in the session to use them later if necessary
+    request.session['converted_product_prices'] = converted_product_prices
+    request.session['converted_old_price'] = converted_old_price
+
+    print(converted_product_prices, 'converted product price')
+    print(converted_old_price, 'converted old price')
+
+
     print(converted_product_prices, "session products")
 
     current_time = timezone.now()
@@ -88,6 +106,9 @@ def index(request):
 
     countries = getattr(request, 'countries', [])
     print(countries, "country data")
+
+    vendors = Vendor.objects.all()
+    print(vendors, 'vendors')
 
     context = {
         "products": products,
@@ -102,7 +123,8 @@ def index(request):
         "current_currency": current_currency,
         "converted_product_prices": converted_product_prices,
         "converted_old_price": converted_old_price,
-        "countries": countries
+        "countries": countries,
+        "vendors": vendors
     }
 
     return render(request, 'core/index.html', context)
@@ -116,7 +138,7 @@ def set_currency(request):
         try:
             country = Country.objects.get(name=country_name)
             request.session['user_selected_country'] = country_name  # Save preferred country
-            request.session['user_currency_code'] = country.currency.code
+            request.session['user_currency_code'] = country.currency.symbol
             request.session['user_exchange_rate'] = float(country.currency.exchange_rate_to_usd)
             return JsonResponse({"success": "Currency set successfully"})
         except Country.DoesNotExist:
@@ -391,6 +413,10 @@ def add_to_cart(request):
 
 def cart_view(request):
     cart_total_amount = 0
+    current_currency = request.session.get('user_currency_code', 'USD')
+    countries = getattr(request, 'countries', [])
+    print(countries, "country data")
+
     if 'cart_data_obj' in request.session:
         
         for p_id, item in request.session['cart_data_obj'].items():
@@ -407,7 +433,10 @@ def cart_view(request):
         return render(request, "core/cart.html", {
             "cart_data": request.session['cart_data_obj'],
             'totalcartitems': len(request.session['cart_data_obj']),
-            'cart_total_amount': cart_total_amount
+            'cart_total_amount': cart_total_amount,
+            'current_currency': current_currency,
+            'countries': countries
+
         })
     else:
         messages.warning(request, "Your cart is empty")
@@ -495,6 +524,7 @@ def save_checkout_info(request):
             state = request.session['state']
             country = request.session['country']
 
+
             # Create ORder Object
             order = CartOrder.objects.create(
                 # user=request.user,
@@ -527,7 +557,7 @@ def save_checkout_info(request):
 
                 cart_order_products = CartOrderProducts.objects.create(
                     order=order,
-                    invoice_no="INVOICE_NO-" + str(order.id), # INVOICE_NO-5,
+                    invoice_no="INVOICE_NO-" + str(order.id),
                     item=item['title'],
                     image=item['image'],
                     qty=item['qty'],
@@ -542,7 +572,7 @@ def save_checkout_info(request):
             send_sms_confirmation(mobile, order.oid)
 
           
-        return redirect("core:checkout", order.oid)
+        # return redirect("core:checkout", order.oid)
     return redirect("core:checkout", order.oid)
 
 
@@ -615,7 +645,7 @@ def create_checkout_session(request, oid):
         line_items = [
             {
                 'price_data': {
-                    'currency': request.user_currency_code,
+                    'currency': request.session.get('user_currency_code',{}),
                     'product_data': {
                         'name': order.full_name
                     },
@@ -673,12 +703,17 @@ def checkout(request, oid):
         response = lipa_na_mpesa_online(request)
         print(response)
         return redirect("core:payment-completed", order.oid)
-
+    current_currency = request.session.get('user_currency_code', 'USD')
+    countries = getattr(request, 'countries', [])
+    print(countries, "country data")
+    
     context = {
         "order": order,
         "order_items": order_items,
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
-        "mpesa_form": mpesa_form
+        "mpesa_form": mpesa_form,
+        'current_currency': current_currency,
+        'countries': countries
     }
 
     return render(request, "core/checkout.html", context)
@@ -1148,7 +1183,7 @@ def lipa_na_mpesa_online(request):
                 "PartyA": phone_number,
                 "PartyB": business_short_code,
                 "PhoneNumber": phone_number,
-                "CallBackURL": "https://f2e9-41-90-36-167.ngrok-free.app/mpesa/callback/",
+                "CallBackURL": "https://8360-41-90-45-246.ngrok-free.app/mpesa/callback/",
                 "AccountReference": order_id,
                 "TransactionDesc": "Payment for XYZ"
             }

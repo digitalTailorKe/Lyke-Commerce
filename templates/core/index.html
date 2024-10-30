@@ -240,10 +240,10 @@
                                                         <div class="product-card-bottom">
                                                             <div class="product-price">
                                                                 <span>{{ current_currency }}
-                                                                    {% with price=converted_product_prices|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}   
+                                                                    {% with price=converted_product_prices|get_item:p.id %}{{ price|floatformat:2|default:p.price }}{% endwith %}   
                                                                 </span>
                                                                 <span class="old-price">{{ current_currency }} 
-                                                                    {% with price=converted_old_price|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}
+                                                                    {% with price=converted_old_price|get_item:p.id %}{{ price|floatformat:2|default:p.price }}{% endwith %}
                                                                 </span>
                                                             </div>
                                                             <div class="add-cart">
@@ -414,10 +414,15 @@
                                             <div>
                                                 <span class="font-small text-muted">By <a href="{% url 'core:vendor-detail' deal.product.vendor.id %}">{{ deal.product.vendor.title }}</a></span>
                                             </div>
+                                            
                                             <div class="product-card-bottom">
                                                 <div class="product-price">
-                                                    <span>${{ deal.get_discounted_price }}</span>
-                                                    <span class="old-price">${{ deal.product.price }}</span>
+                                                    <span>{{ current_currency }}
+                                                        {% with price=converted_deal_prices|get_item:deal.product.id %}{{ price|floatformat:2|default:deal.get_discounted_price }}{% endwith %}
+                                                    </span>
+                                                    <span class="old-price">{{ current_currency }}
+                                                        {% with price=converted_deal_prices|get_item:deal.product.id %}{{ price|floatformat:2|default:deal.product.price }}{% endwith %}
+                                                    </span>
                                                 </div>
                                                 <div class="bottom-action">
 

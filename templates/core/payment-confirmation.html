@@ -44,14 +44,14 @@
             </div>
         </div>
 
-        <div class="modal fade" id="paymentProcessingModal" tabindex="-1" aria-labelledby="paymentProcessingModalLabel" aria-hidden="true">
+        <div class="modal fade"data-backdrop="static" data-keyboard="false" id="paymentProcessingModal" tabindex="-1" aria-labelledby="paymentProcessingModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="paymentProcessingModalLabel">Processing Payment</h5>
                 </div>
                 <div class="modal-body">
-                  We are processing your order. Please make sure you have <strong> $ {{ cart_order.price }}</strong> in your account.
+                  We are processing your order. Please make sure you have <strong> $ {{ cart_order.price }}</strong> in your account. Check out for mpesa prompt on your phone to enter your pin
                 </div>
                 <div class="modal-footer">
                                   <!-- Countdown Display beside the button -->
@@ -150,7 +150,11 @@
             $('#paymentErrorAlert').addClass('d-none');
         
             // Show the modal when the button is clicked
-            var $paymentProcessingModal = new bootstrap.Modal(document.getElementById('paymentProcessingModal'));
+            var $paymentProcessingModal = new bootstrap.Modal(document.getElementById('paymentProcessingModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            
             $paymentProcessingModal.show();
         
             // Disable the "Pay Now" button and change its text to indicate waiting state
