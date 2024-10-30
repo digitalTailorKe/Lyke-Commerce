@@ -75,6 +75,7 @@ def index(request):
         categorized_products[category] = products
 
     products = Product.objects.filter(product_status="published", featured=True).order_by("-id")
+    new_products = Product.objects.order_by('-mfd')[:3]
 
     # Retrieve the already converted prices from the session
     converted_product_prices = request.session.get('converted_product_prices', {})
@@ -124,7 +125,8 @@ def index(request):
         "converted_product_prices": converted_product_prices,
         "converted_old_price": converted_old_price,
         "countries": countries,
-        "vendors": vendors
+        "vendors": vendors,
+        "new_products": new_products
     }
 
     return render(request, 'core/index.html', context)
@@ -162,6 +164,8 @@ def product_list_view(request):
 
     converted_product_prices = request.session.get('converted_product_prices', {})
     converted_old_price = request.session.get('converted_old_price', {})
+    currency_currency = request.session.get('user_currency_code', {})
+    current_currency_rate = Decimal(request.session.get('user_exchange_rate', 1.0))
     
 
     context = {
@@ -170,8 +174,10 @@ def product_list_view(request):
         "deals": deals,
         "cart_data": cart_data,
         "compared_items": compared_items,
-         "converted_product_prices": converted_product_prices,
-        "converted_old_price": converted_old_price
+        "converted_product_prices": converted_product_prices,
+        "converted_old_price": converted_old_price,
+        "currency_currency": currency_currency,
+        "current_currency_rate": current_currency_rate
     }
 
     return render(request, 'core/product-list.html', context)
@@ -230,6 +236,11 @@ def product_detail_view(request, pid):
     product = Product.objects.get(pid=pid)
     # product = get_object_or_404(Product, pid=pid)
     products = Product.objects.filter(category=product.category).exclude(pid=pid)
+    new_products = Product.objects.order_by('-mfd')[:3]
+
+    converted_product_prices = request.session.get('converted_product_prices', {})
+    converted_old_price = request.session.get('converted_old_price', {})
+    current_currency_rate = Decimal(request.session.get('user_exchange_rate', 1.0))
 
     # Getting all reviews related to a product
     reviews = ProductReview.objects.filter(product=product).order_by("-date")
@@ -258,7 +269,7 @@ def product_detail_view(request, pid):
 
 
     p_image = product.p_images.all()
-
+    current_currency = request.session.get('user_currency_code', {}) 
     context = {
         "p": product,
         "address": address,
@@ -268,6 +279,11 @@ def product_detail_view(request, pid):
         "average_rating": average_rating,
         "reviews": reviews,
         "products": products,
+        "current_currency": current_currency,
+        "new_products": new_products,
+        "current_currency_rate": current_currency_rate,
+        "converted_old_price": converted_old_price,
+        "converted_product_prices": converted_product_prices
     }
 
     return render(request, "core/product-detail.html", context)
