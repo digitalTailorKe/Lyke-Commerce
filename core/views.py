@@ -296,6 +296,7 @@ def tag_list(request, tag_slug=None):
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
         products = products.filter(tags__in=[tag])
+        print(products, 'products found')
 
     context = {
         "products": products,
