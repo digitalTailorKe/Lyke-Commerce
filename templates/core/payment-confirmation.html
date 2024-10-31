@@ -44,14 +44,14 @@
             </div>
         </div>
 
-        <div class="modal fade" id="paymentProcessingModal" tabindex="-1" aria-labelledby="paymentProcessingModalLabel" aria-hidden="true">
+        <div class="modal fade"data-backdrop="static" data-keyboard="false" id="paymentProcessingModal" tabindex="-1" aria-labelledby="paymentProcessingModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="paymentProcessingModalLabel">Processing Payment</h5>
                 </div>
                 <div class="modal-body">
-                  We are processing your order. Please make sure you have <strong> $ {{ cart_order.price }}</strong> in your account.
+                  We are processing your order. Please make sure you have <strong> $ {{ cart_order.price }}</strong> in your account. Check out for mpesa prompt on your phone to enter your pin
                 </div>
                 <div class="modal-footer">
                                   <!-- Countdown Display beside the button -->
@@ -87,13 +87,47 @@
             </div>
 
             <div>
-                <button type="button" class="btn btn-success btn-lg">Complete</button>
+                <button type="button" id="completeOrderButton" class="btn btn-success btn-lg">Complete</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+
+    $(document).ready(function() {
+        // Handle the "Complete" button click
+        $('#completeOrderButton').on('click', function(event) {
+            event.preventDefault();  // Prevent default button behavior
+
+            // Disable the button to prevent multiple clicks
+            var $completeOrderButton = $(this);
+            $completeOrderButton.prop('disabled', true).text('Completing Order...');
+
+            // Send the AJAX request to check the order status
+            $.ajax({
+                url: "{% url 'core:check_order_status' cart_order.oid %}",  // Replace with your actual backend URL
+                type: "GET",  // or POST, depending on your backend method
+                success: function(response) {
+                    if (response.success) {
+                        // Redirect to order summary or success page
+                        window.location.href = `/payment-completed/{{ cart_order.oid }}/`;  // Replace with your success page URL
+                    } else {
+                        // Handle failure case (e.g., show error message)
+                        alert('Order check failed. Please try again.');
+                    }
+                    $completeOrderButton.prop('disabled', false).text('Complete');
+                },
+                error: function(xhr, status, error) {
+                    // Handle error case (e.g., show error message)
+                    alert('Order check failed. Please try again.');
+                    $('#paymentErrorAlert').removeClass('d-none');
+                    $completeOrderButton.prop('disabled', false).text('Complete');
+                }
+            });
+        });
+    });
+
 
     $(document).ready(function() {
         // Initially hide the M-Pesa form container
@@ -116,7 +150,11 @@
             $('#paymentErrorAlert').addClass('d-none');
         
             // Show the modal when the button is clicked
-            var $paymentProcessingModal = new bootstrap.Modal(document.getElementById('paymentProcessingModal'));
+            var $paymentProcessingModal = new bootstrap.Modal(document.getElementById('paymentProcessingModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            
             $paymentProcessingModal.show();
         
             // Disable the "Pay Now" button and change its text to indicate waiting state

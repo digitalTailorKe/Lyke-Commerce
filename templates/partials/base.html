@@ -296,15 +296,18 @@
                         <div class="header-action-right">
                             <div class="header-action-2">
                                 <div class="search-location">
-                                    <form action="#">
-                                        <select class="select-active">
-                                            <option>{{ user_country|default:"Your Location" }}</option>
+                                    <form method="POST" action="{% url 'core:set_currency' %}" id="currency-form">
+                                        <!-- Country Dropdown -->
+                                        <select id="country-select" onchange="setCurrency(this)">
+                                            <option value="">{{ user_country|default:"Your Location" }}</option>
                                             {% for country in countries %}
-                                                <option>{{ country }}</option>
+                                                <option value="{{ country }}" {% if country == user_country %}selected{% endif %}>{{ country }}</option>
                                             {% endfor %}
                                         </select>
-                                    </form>
+                                    </form>                                                                       
                                 </div>
+                                <div id="success-message" style="display: none; color: green;"></div>
+                                <div id="error-message" style="display: none; color: red;"></div>
                                 {% comment %} HEADER ACTIONS {% endcomment %}
                                 <div class="header-action-icon-2">
                                     <a href="{% url 'core:compare_products' %}">
@@ -378,7 +381,7 @@
                     </div>
                     <div class="header-nav d-none d-lg-flex">
                         <div class="main-categori-wrap d-none d-lg-block">
-                            <a class="categories-button-active" href="#">
+                            <a class="categories-button-active" href="{% url 'core:category-list' %}">
                                 <span class="fi-rs-apps"></span> 
                                 <!-- <span class="et">Browse</span> -->
                                  All Categories
@@ -411,7 +414,7 @@
                                     </li>
 
                                     <li>
-                                        <a href="shop-grid-right.html">Category <i class="fi-rs-angle-down"></i></a>
+                                        <a href="{% url 'core:category-list' %}">Category <i class="fi-rs-angle-down"></i></a>
                                         <ul class="sub-menu">
                                             {% for c in categories %}
                                             <li>
@@ -440,34 +443,34 @@
                                             <li class="sub-mega-menu sub-mega-menu-width-22">
                                                 <a class="menu-title" href="#">Analgesics (Pain Relievers)</a>
                                                 <ul>
-                                                    <li><a href="shop-product-right.html">Nonsteroidal Anti-Inflammatory </a></li>
-                                                    <li><a href="shop-product-right.html">Opioids</a></li>
-                                                    <li><a href="shop-product-right.html">Acetaminophen</a></li>
-                                                    <li><a href="shop-product-right.html">Morphine</a></li>
-                                                    <li><a href="shop-product-right.html">Codeine</a></li>
-                                                    <li><a href="shop-product-right.html">Oxycodone</a></li>
+                                                    <li><a href="{% url 'core:tags' 'nonsteroidal-anti-inflammatory' %}">Nonsteroidal Anti-Inflammatory </a></li>
+                                                    <li><a href="{% url 'core:tags' 'opioids' %}">Opioids</a></li>
+                                                    <li><a href="{% url 'core:tags' 'acetaminophen' %}">Acetaminophen</a></li>
+                                                    <li><a href="{% url 'core:tags' 'morphine' %}">Morphine</a></li>
+                                                    <li><a href="{% url 'core:tags' 'codeine' %}">Codeine</a></li>
+                                                    <li><a href="{% url 'core:tags' 'oxycodone' %}">Oxycodone</a></li>
                                                     
                                                 </ul>
                                             </li>
                                             <li class="sub-mega-menu sub-mega-menu-width-22">
                                                 <a class="menu-title" href="#">Antibiotics</a>
                                                 <ul>
-                                                    <li><a href="shop-product-right.html">Penicillins</a></li>
-                                                    <li><a href="shop-product-right.html">Macrolides</a></li>
-                                                    <li><a href="shop-product-right.html">Fluoroquinolones</a></li>
-                                                    <li><a href="shop-product-right.html">Cephalosporins</a></li>
+                                                    <li><a href="{% url 'core:tags' 'penicillins' %}">Penicillins</a></li>
+                                                    <li><a href="{% url 'core:tags' 'macrolides' %}">Macrolides</a></li>
+                                                    <li><a href="{% url 'core:tags' 'fluoroquinolones' %}">Fluoroquinolones</a></li>
+                                                    <li><a href="{% url 'core:tags' 'cephalosporins' %}">Cephalosporins</a></li>
                                                     
                                                 </ul>
                                             </li>
                                             <li class="sub-mega-menu sub-mega-menu-width-22">
                                                 <a class="menu-title" href="#">Antidepressants</a>
                                                 <ul>
-                                                    <li><a href="shop-product-right.html">SSRIs</a></li>
-                                                    <li><a href="shop-product-right.html">Tricyclic Antidepressants</a></li>
-                                                    <li><a href="shop-product-right.html">SNRIs</a></li>
-                                                    <li><a href="shop-product-right.html">Venlafaxine</a></li>
-                                                    <li><a href="shop-product-right.html">Duloxetine</a></li>
-                                                    <li><a href="shop-product-right.html">Ceftriaxone</a></li>
+                                                    <li><a href="{% url 'core:tags' 'ssris' %}">SSRIs</a></li>
+                                                    <li><a href="{% url 'core:tags' 'tricyclic-antidepressants' %}">Tricyclic Antidepressants</a></li>
+                                                    <li><a href="{% url 'core:tags' 'snris' %}">SNRIs</a></li>
+                                                    <li><a href="{% url 'core:tags' 'venlafaxine' %}">Venlafaxine</a></li>
+                                                    <li><a href="{% url 'core:tags' 'duloxetine' %}">Duloxetine</a></li>
+                                                    <li><a href="{% url 'core:tags' 'ceftriaxone' %}">Ceftriaxone</a></li>
                                                 </ul>
                                             </li>
                                             <li class="sub-mega-menu sub-mega-menu-width-34">
@@ -605,14 +608,7 @@
                         <ul class="mobile-menu font-heading">
                             <li class="menu-item-has-children">
                                 <a href="index.html">Home</a>
-                                <ul class="dropdown">
-                                    <li><a href="index.html">Home 1</a></li>
-                                    <li><a href="index-2.html">Home 2</a></li>
-                                    <li><a href="index-3.html">Home 3</a></li>
-                                    <li><a href="index-4.html">Home 4</a></li>
-                                    <li><a href="index-5.html">Home 5</a></li>
-                                    <li><a href="index-6.html">Home 6</a></li>
-                                </ul>
+                               
                             </li>
                             <li class="menu-item-has-children">
                                 <a href="shop-grid-right.html">shop</a>
@@ -651,63 +647,74 @@
                             </li>
                             <li class="menu-item-has-children">
                                 <a href="#">Vendors</a>
+                                {% for vendor in vendors %}
                                 <ul class="dropdown">
-                                    <li><a href="vendors-grid.html">Vendors Grid</a></li>
-                                    <li><a href="vendors-list.html">Vendors List</a></li>
-                                    <li><a href="vendor-details-1.html">Vendor Details 01</a></li>
-                                    <li><a href="vendor-details-2.html">Vendor Details 02</a></li>
-                                    <li><a href="vendor-dashboard.html">Vendor Dashboard</a></li>
-                                    <li><a href="vendor-guide.html">Vendor Guide</a></li>
+                                    <li><a href="vendors-grid.html">{{ vendor.title }}</a></li>
                                 </ul>
+                                {% endfor %}
                             </li>
                             <li class="menu-item-has-children">
                                 <a href="#">Mega menu</a>
-                                <ul class="dropdown">
-                                    <li class="menu-item-has-children">
-                                        <a href="#">Women's Health</a>
-                                        <ul class="dropdown">
-                                            <li><a href="shop-product-right.html">Menstral product</a></li>
-                                            <li><a href="shop-product-right.html">Prenatal & Postnatal care</a></li>
-                                            <li><a href="shop-product-right.html">Skincare & Beauty</a></li>
-                                            <li><a href="shop-product-right.html">Health Suppliment</a></li>
+                                <ul class="mega-menu dropdown">
+                                            <li class="sub-mega-menu sub-mega-menu-width-22">
+                                                <a class="menu-title" href="#">Analgesics (Pain Relievers)</a>
+                                                <ul>
+                                                    <li><a href="shop-product-right.html">Nonsteroidal Anti-Inflammatory </a></li>
+                                                    <li><a href="shop-product-right.html">Opioids</a></li>
+                                                    <li><a href="shop-product-right.html">Acetaminophen</a></li>
+                                                    <li><a href="shop-product-right.html">Morphine</a></li>
+                                                    <li><a href="shop-product-right.html">Codeine</a></li>
+                                                    <li><a href="shop-product-right.html">Oxycodone</a></li>
+                                                    
+                                                </ul>
+                                            </li>
+                                            <li class="sub-mega-menu sub-mega-menu-width-22">
+                                                <a class="menu-title" href="#">Antibiotics</a>
+                                                <ul>
+                                                    <li><a href="shop-product-right.html">Penicillins</a></li>
+                                                    <li><a href="shop-product-right.html">Macrolides</a></li>
+                                                    <li><a href="shop-product-right.html">Fluoroquinolones</a></li>
+                                                    <li><a href="shop-product-right.html">Cephalosporins</a></li>
+                                                    
+                                                </ul>
+                                            </li>
+                                            <li class="sub-mega-menu sub-mega-menu-width-22">
+                                                <a class="menu-title" href="#">Antidepressants</a>
+                                                <ul>
+                                                    <li><a href="shop-product-right.html">SSRIs</a></li>
+                                                    <li><a href="shop-product-right.html">Tricyclic Antidepressants</a></li>
+                                                    <li><a href="shop-product-right.html">SNRIs</a></li>
+                                                    <li><a href="shop-product-right.html">Venlafaxine</a></li>
+                                                    <li><a href="shop-product-right.html">Duloxetine</a></li>
+                                                    <li><a href="shop-product-right.html">Ceftriaxone</a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="sub-mega-menu sub-mega-menu-width-34">
+                                                <div class="menu-banner-wrap">
+                                                    <a href="shop-product-right.html"><img src="{% static 'assets/imgs/banner/banner-menu.png' %}" alt="Lyke" /></a>
+                                                    <div class="menu-banner-content">
+                                                        <h4>Hot deals</h4>
+                                                        <h3>
+                                                            Don't miss<br /> Trending
+                                                        </h3>
+                                                        <div class="menu-banner-price">
+                                                            <span class="new-price text-success">Save to 50%</span>
+                                                        </div>
+                                                        <div class="menu-banner-btn">
+                                                            <a href="shop-product-right.html">Shop now</a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="menu-banner-discount">
+                                                        <h3>
+                                                            <span>25%</span> off
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                            </li>
                                         </ul>
-                                    </li>
-                                    <li class="menu-item-has-children">
-                                        <a href="#">Men's Health</a>
-                                        <ul class="dropdown">
-                                            <li><a href="shop-product-right.html">Health Suppliment</a></li>
-                                            <li><a href="shop-product-right.html">Beard Care</a></li>
-                                            <li><a href="shop-product-right.html">Fitness & Nutrition</a></li>
-                                        </ul>
-                                    </li>
-                                    <li class="menu-item-has-children">
-                                        <a href="#">Health & Fitness</a>
-                                        <ul class="dropdown">
-                                            <li><a href="shop-product-right.html">Proteins suppliments</a></li>
-                                            <li><a href="shop-product-right.html">Pre-work out suppliments</a></li>
-                                            <li><a href="shop-product-right.html">Joint health suppliments</a></li>
-                                            <li><a href="shop-product-right.html">Hair Loss treatment</a></li>
-                                            <li><a href="shop-product-right.html">Prostrate health</a></li>
-                                        </ul>
-                                    </li>
-                                </ul>
                             </li>
                             <li class="menu-item-has-children">
-                                <a href="blog-category-fullwidth.html">Blog</a>
-                                <ul class="dropdown">
-                                    <li><a href="blog-category-grid.html">Blog Category Grid</a></li>
-                                    <li><a href="blog-category-list.html">Blog Category List</a></li>
-                                    <li><a href="blog-category-big.html">Blog Category Big</a></li>
-                                    <li><a href="blog-category-fullwidth.html">Blog Category Wide</a></li>
-                                    <li class="menu-item-has-children">
-                                        <a href="#">Single Product Layout</a>
-                                        <ul class="dropdown">
-                                            <li><a href="blog-post-left.html">Left Sidebar</a></li>
-                                            <li><a href="blog-post-right.html">Right Sidebar</a></li>
-                                            <li><a href="blog-post-fullwidth.html">No Sidebar</a></li>
-                                        </ul>
-                                    </li>
-                                </ul>
+                                <a href="#">Blog</a>
                             </li>
                             <li class="menu-item-has-children">
                                 <a href="#">Pages</a>
@@ -984,6 +991,42 @@
 
     <script src="https://cdn.jsdelivr.net/npm/currency-symbol-map@5.0.4/lib/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+
+
+    <script>
+       function setCurrency(selectElement) {
+    const country = selectElement.value;  // Get the selected country value
+    console.log(country);
+
+    $.ajax({
+        url: "{% url 'core:set_currency' %}",
+        type: "POST",
+        data: {
+            'country': country
+        },
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'  // Include the CSRF token for security
+        },
+        success: function(response) {
+            if (response.success) {
+                $("#success-message").text(response.success).show();
+                $("#error-message").hide();
+                location.reload();
+            } else if (response.error) {
+                $("#error-message").text(response.error).show();
+                $("#success-message").hide();
+            }
+        },
+        error: function() {
+            $("#error-message").text("An error occurred. Please try again.").show();
+            $("#success-message").hide();
+        }
+    });
+}
+
+    </script>
+
     <script>
         // Function to replace all $ symbols in text with the current currency symbol
         function replaceDollarSymbols(currencySymbol) {

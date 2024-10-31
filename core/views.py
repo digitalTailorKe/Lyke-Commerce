@@ -13,7 +13,7 @@ from requests import session
 from requests.auth import HTTPBasicAuth
 import requests
 from taggit.models import Tag
-from core.models import Coupon, DealOfTheDay, MpesaTransaction, Product, Category, ProductComparison, Vendor, CartOrder, CartOrderProducts, ProductImages, ProductReview, wishlist_model, Address
+from core.models import Country, Coupon, DealOfTheDay, MpesaTransaction, Product, Category, ProductComparison, Vendor, CartOrder, CartOrderProducts, ProductImages, ProductReview, wishlist_model, Address
 from userauths.models import ContactUs, Profile
 from core.forms import ProductReviewForm, MpesaPaymentForm
 from django.template.loader import render_to_string
@@ -38,18 +38,22 @@ from .middleware import country_to_currency_data
 
 
 def index(request):
+
+    if 'country' in request.POST:
+      country_name = request.POST.get('country')
+      print(country_name, 'Counrty in request')
+      set_currency(request, country_name=country_name)
+
     cart_data = request.session.get('cart_data_obj', {})
     compared_items = request.session.get('comparison', [])
 
     # Fetch location and currency details from the request
-    user_location = getattr(request, 'location', {}) or {}
-    current_currency = getattr(request, 'user_currency_code', 'USD')
-    current_currency_rate = getattr(request, 'user_exchange_rate', 1.0)
+    user_country = request.session.get('user_country', 'Unknown')
+    current_currency = request.session.get('user_currency_code', 'USD')
+    current_currency_rate = Decimal(request.session.get('user_exchange_rate', 1.0))
 
     print(current_currency, 'index view')
     print(current_currency_rate, 'index view')
-
-    user_country = user_location.get('country_name', 'Unknown')
 
     if request.user.is_authenticated:
         comparison = ProductComparison.objects.filter(user=request.user).first()
@@ -71,10 +75,29 @@ def index(request):
         categorized_products[category] = products
 
     products = Product.objects.filter(product_status="published", featured=True).order_by("-id")
+    new_products = Product.objects.order_by('-mfd')[:3]
 
     # Retrieve the already converted prices from the session
     converted_product_prices = request.session.get('converted_product_prices', {})
     converted_old_price = request.session.get('converted_old_price', {})
+
+    for product in products:
+        # Convert the current product price and store it
+        converted_price = product.price * current_currency_rate
+        converted_old_price_value = product.old_price * current_currency_rate if product.old_price else None
+
+        # Store the converted prices in the dictionary (or session, depending on the need)
+        converted_product_prices[product.id] = float(round(converted_price, 2))
+        if converted_old_price_value:
+            converted_old_price[product.id] = float(round(converted_old_price_value, 2))
+
+    # Store the converted prices in the session to use them later if necessary
+    request.session['converted_product_prices'] = converted_product_prices
+    request.session['converted_old_price'] = converted_old_price
+
+    print(converted_product_prices, 'converted product price')
+    print(converted_old_price, 'converted old price')
+
 
     print(converted_product_prices, "session products")
 
@@ -83,6 +106,10 @@ def index(request):
     tags = Tag.objects.all().order_by("-id")[:6]
 
     countries = getattr(request, 'countries', [])
+    print(countries, "country data")
+
+    vendors = Vendor.objects.all()
+    print(vendors, 'vendors')
 
     context = {
         "products": products,
@@ -97,11 +124,31 @@ def index(request):
         "current_currency": current_currency,
         "converted_product_prices": converted_product_prices,
         "converted_old_price": converted_old_price,
-        "countries": countries
+        "countries": countries,
+        "vendors": vendors,
+        "new_products": new_products
     }
 
     return render(request, 'core/index.html', context)
 
+@csrf_exempt
+def set_currency(request):
+    country_name = request.POST.get('country')  # Access data from request.POST
+    print(country_name, 'Country_name')
+
+    if country_name:
+        try:
+            country = Country.objects.get(name=country_name)
+            request.session['user_selected_country'] = country_name  # Save preferred country
+            request.session['user_currency_code'] = country.currency.symbol
+            request.session['user_exchange_rate'] = float(country.currency.exchange_rate_to_usd)
+            return JsonResponse({"success": "Currency set successfully"})
+        except Country.DoesNotExist:
+            return JsonResponse({"error": "Country not found"})
+    else:
+        request.session['user_currency_code'] = 'USD'
+        request.session['user_exchange_rate'] = 1.0
+        return JsonResponse({"success": "Currency set to default (USD)"})
 
 def product_list_view(request):
     
@@ -117,6 +164,8 @@ def product_list_view(request):
 
     converted_product_prices = request.session.get('converted_product_prices', {})
     converted_old_price = request.session.get('converted_old_price', {})
+    currency_currency = request.session.get('user_currency_code', {})
+    current_currency_rate = Decimal(request.session.get('user_exchange_rate', 1.0))
     
 
     context = {
@@ -125,8 +174,10 @@ def product_list_view(request):
         "deals": deals,
         "cart_data": cart_data,
         "compared_items": compared_items,
-         "converted_product_prices": converted_product_prices,
-        "converted_old_price": converted_old_price
+        "converted_product_prices": converted_product_prices,
+        "converted_old_price": converted_old_price,
+        "currency_currency": currency_currency,
+        "current_currency_rate": current_currency_rate
     }
 
     return render(request, 'core/product-list.html', context)
@@ -185,6 +236,11 @@ def product_detail_view(request, pid):
     product = Product.objects.get(pid=pid)
     # product = get_object_or_404(Product, pid=pid)
     products = Product.objects.filter(category=product.category).exclude(pid=pid)
+    new_products = Product.objects.order_by('-mfd')[:3]
+
+    converted_product_prices = request.session.get('converted_product_prices', {})
+    converted_old_price = request.session.get('converted_old_price', {})
+    current_currency_rate = Decimal(request.session.get('user_exchange_rate', 1.0))
 
     # Getting all reviews related to a product
     reviews = ProductReview.objects.filter(product=product).order_by("-date")
@@ -213,7 +269,7 @@ def product_detail_view(request, pid):
 
 
     p_image = product.p_images.all()
-
+    current_currency = request.session.get('user_currency_code', {}) 
     context = {
         "p": product,
         "address": address,
@@ -223,6 +279,11 @@ def product_detail_view(request, pid):
         "average_rating": average_rating,
         "reviews": reviews,
         "products": products,
+        "current_currency": current_currency,
+        "new_products": new_products,
+        "current_currency_rate": current_currency_rate,
+        "converted_old_price": converted_old_price,
+        "converted_product_prices": converted_product_prices
     }
 
     return render(request, "core/product-detail.html", context)
@@ -235,6 +296,7 @@ def tag_list(request, tag_slug=None):
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
         products = products.filter(tags__in=[tag])
+        print(products, 'products found')
 
     context = {
         "products": products,
@@ -368,6 +430,10 @@ def add_to_cart(request):
 
 def cart_view(request):
     cart_total_amount = 0
+    current_currency = request.session.get('user_currency_code', 'USD')
+    countries = getattr(request, 'countries', [])
+    print(countries, "country data")
+
     if 'cart_data_obj' in request.session:
         
         for p_id, item in request.session['cart_data_obj'].items():
@@ -384,7 +450,10 @@ def cart_view(request):
         return render(request, "core/cart.html", {
             "cart_data": request.session['cart_data_obj'],
             'totalcartitems': len(request.session['cart_data_obj']),
-            'cart_total_amount': cart_total_amount
+            'cart_total_amount': cart_total_amount,
+            'current_currency': current_currency,
+            'countries': countries
+
         })
     else:
         messages.warning(request, "Your cart is empty")
@@ -472,6 +541,7 @@ def save_checkout_info(request):
             state = request.session['state']
             country = request.session['country']
 
+
             # Create ORder Object
             order = CartOrder.objects.create(
                 # user=request.user,
@@ -504,7 +574,7 @@ def save_checkout_info(request):
 
                 cart_order_products = CartOrderProducts.objects.create(
                     order=order,
-                    invoice_no="INVOICE_NO-" + str(order.id), # INVOICE_NO-5,
+                    invoice_no="INVOICE_NO-" + str(order.id),
                     item=item['title'],
                     image=item['image'],
                     qty=item['qty'],
@@ -519,7 +589,7 @@ def save_checkout_info(request):
             send_sms_confirmation(mobile, order.oid)
 
           
-        return redirect("core:checkout", order.oid)
+        # return redirect("core:checkout", order.oid)
     return redirect("core:checkout", order.oid)
 
 
@@ -592,7 +662,7 @@ def create_checkout_session(request, oid):
         line_items = [
             {
                 'price_data': {
-                    'currency': request.user_currency_code,
+                    'currency': request.session.get('user_currency_code',{}),
                     'product_data': {
                         'name': order.full_name
                     },
@@ -650,12 +720,17 @@ def checkout(request, oid):
         response = lipa_na_mpesa_online(request)
         print(response)
         return redirect("core:payment-completed", order.oid)
-
+    current_currency = request.session.get('user_currency_code', 'USD')
+    countries = getattr(request, 'countries', [])
+    print(countries, "country data")
+    
     context = {
         "order": order,
         "order_items": order_items,
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
-        "mpesa_form": mpesa_form
+        "mpesa_form": mpesa_form,
+        'current_currency': current_currency,
+        'countries': countries
     }
 
     return render(request, "core/checkout.html", context)
@@ -1012,15 +1087,17 @@ def mpesa_callback(request):
                         
                         mpesa_transaction.MpesaReceiptNumber=mpesa_receipt_number
                         mpesa_transaction.PhoneNumber=phone_number
+                        mpesa_transaction.TransactionDate=timezone.now()
                         mpesa_transaction.Amount=amount
+
                         mpesa_transaction.save()
                         
                         order = CartOrder.objects.get(mpesa_checkout_request_id = checkout_request_id)
                           
                         if order:
                             
-                            # if order.mpesa_checkout_request_id == checkout_request_id:
-                            #     return JsonResponse({"error": "Cannot use similar checkout id"})
+                            if order.mpesa_checkout_request_id == checkout_request_id:
+                                return JsonResponse({"error": "Cannot use similar checkout id"})
                             
                             print("order found")
         
@@ -1028,13 +1105,13 @@ def mpesa_callback(request):
                             order.paid_amount = amount
                             order.payment_status = "completed"
                             order.paid_status = True
-                            
+                            mpesa_transaction.order_id = order.oid
+                            mpesa_transaction.is_finished=True
+                            mpesa_transaction.is_successful=False
                             order.save()
                             print("here")
                             send_payment_confirmation_mail(order.email,order.oid)
                             print("after here")
-
-
                         else:
                             print("order not found")
                         
@@ -1047,11 +1124,13 @@ def mpesa_callback(request):
             else:
                 if checkout_request_id:
                     try:
+                        print("transaction updated")
                         mpesa_transaction = MpesaTransaction.objects.get(CheckoutRequestID = checkout_request_id)
                         mpesa_transaction.ResultCode = result_code
                         mpesa_transaction.ResultDesc=result_desc
                         mpesa_transaction.is_finished=True
                         mpesa_transaction.is_successful=True
+                        mpesa_transaction.TransactionDate = timezone.now()
                         mpesa_transaction.save()
                         
                     except MpesaTransaction.DoesNotExist:
@@ -1121,7 +1200,7 @@ def lipa_na_mpesa_online(request):
                 "PartyA": phone_number,
                 "PartyB": business_short_code,
                 "PhoneNumber": phone_number,
-                "CallBackURL": "https://dc53-2409-4072-ebf-8658-cd16-f006-9df0-bab0.ngrok-free.app/mpesa/callback/",
+                "CallBackURL": "https://8360-41-90-45-246.ngrok-free.app/mpesa/callback/",
                 "AccountReference": order_id,
                 "TransactionDesc": "Payment for XYZ"
             }
@@ -1235,10 +1314,23 @@ def confirm(request):
                 if order.price != Decimal(trans_amount):
                     return JsonResponse({ 
                         "ResultCode": "C2B00013", 
-                        "ResultDesc": "rejected" 
+                        "ResultDesc": "rejected"
                     })
-                order.mpesa_receipt_number = trans_id
+                order.paid_amount = Decimal(trans_amount) + order.paid_amount
+                order.paid_status = True
+                decimal_paid_amount = order.paid_amount
+                
+
+                if Decimal(decimal_paid_amount) == order.price:
+                    order.payment_status = "Completed"
+                elif Decimal(decimal_paid_amount) > order.price:
+                    order.payment_status = "over-pay"
                 order.save()
+
+                return JsonResponse({ 
+                    "ResultCode": "0", 
+                    "ResultDesc": "Accepted" 
+                })
 
             except CartOrder.DoesNotExist:
                 return JsonResponse({ 
@@ -1252,56 +1344,7 @@ def confirm(request):
                 "ResultDesc": "rejected"
             })
 
-        # if bill_refrence:
-            
-        #     try:
-        #         order = CartOrder.objects.get(oid=bill_refrence)
-        #         previous_receipt = order.mpesa_receipt_number                
-        #         if previous_receipt == trans_id:
-        #            return JsonResponse({
-        #                 "ResultCode": "C2B00012",
-        #                 "ResultDesc": "rejected"
-        #             })
-        #         else:
-        #             order.mpesa_receipt_number = trans_id
-        #     except CartOrder.DoesNotExist:
-        #         return JsonResponse({ "ResultCode": "C2B00012", "ResultDesc": "rejected" })
-            
-        #     order_balance = order.balance
-        #     original_pay = order.paid_amount
-        #     order_price = order.price
-            
-        #     print(original_pay)
-        #     paid_balance = order_balance - Decimal(trans_amount)
-        #     updated_pay = original_pay + Decimal(trans_amount)
-            
-        #     order.paid_amount  = updated_pay
-        #     order.balance = paid_balance
-            
-        #     if updated_pay == order_price:
-        #         order.payment_status = "draft"
-        #     elif updated_pay < order_price:
-        #         order.payment_status = "paid-partially"
-        #     elif updated_pay > order_price:
-        #         order.payment_status = "over-pay"
-                
-        #     print(order.payment_status)
 
-        #     print(paid_balance)
-        #     order.paid_status = True
-            
-        #     order.save() 
-        # else:
-        #     return JsonResponse({
-        #         "ResultCode": "C2B00012",
-        #         "ResultDesc": "rejected"
-        #     })
-            
-        
-        # return JsonResponse({
-        #     "ResultCode": "0",
-        #     "ResultDesc": "Accepted"
-        #     })
      
 @csrf_exempt  
 def valid(request):
@@ -1310,6 +1353,8 @@ def valid(request):
             data = json.loads(request.body.decode('utf-8'))
             bill_refrence = data.get('BillRefNumber')
             amount = data.get('TransAmount')
+            trans_id = data.get('Transid')
+
 
             try:
                 order = CartOrder.objects.filter(oid=bill_refrence).first()
@@ -1330,8 +1375,23 @@ def valid(request):
                         "ResultCode": "C2B00012",
                         "ResultDesc": "rejected"
                     })
+                try:
+                    if order.mpesa_receipt_number == trans_id:
+                        return JsonResponse({
+                           "ResultCode": "0",
+                           "ResultDesc": "Accepted"
+                        })
+                    else:
+                       return JsonResponse({
+                          "ResultCode": "C2B00014",
+                          "ResultDesc": "rejected"
+                        })
+                except:
+                    return JsonResponse({
+                        "ResultCode": "0",
+                        "ResultDesc": "Accepted"
+                    })
 
-            
             except:
                 return JsonResponse({
                     "ResultCode": "C2B00012",
@@ -1392,7 +1452,7 @@ def show_and_delete_messages(request):
 
 @csrf_exempt
 def send_payment_confirmation_email(request, to_email, order_id):
-    
+
     order = CartOrder.objects.get(oid=order_id)
     print(order, "inside email")
     """
@@ -1713,3 +1773,32 @@ def get_currency_rate(request, country_name):
     except requests.exceptions.RequestException as e:
         print(f"CurrencyFreaks API Error: {e}")
         return JsonResponse({'success': False, 'message': 'API request failed'}, status=500)
+
+def check_order_status(request, oid):
+    try:
+        # Fetch the order by its order ID (oid)
+        order = get_object_or_404(CartOrder, oid=oid)
+
+        # Perform any necessary checks here (e.g., whether the order is complete)
+        # Assuming there's a field `is_paid` in the Order model to check payment status
+        if order.paid_status:
+            return JsonResponse({
+                'success': True,
+                'message': 'Order has been successfully completed.',
+                'order_details': {
+                    'order_id': order.oid,
+                    'amount': order.price,
+                    'order_date': order.order_date.strftime('%Y-%m-%d'),
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Order has not been completed yet. Please complete payment.'
+            })
+
+    except CartOrder.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Order not found. Please check the order number and try again.'
+        })

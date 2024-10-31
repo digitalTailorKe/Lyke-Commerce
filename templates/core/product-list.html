@@ -111,8 +111,8 @@
                                                 <div id="slidder-range" class="mb-20"></div>
                                                 <input type="range" name="ranDge" value="{{ min_max_price.price__min|floatformat:2 }}" class="slider-range" id="range" min="{{ min_max_price.price__min }}" max="{{ min_max_price.price__max }}" oninput="max_price.value=this.value">
                                                 <div class="d-flex justify-content-between">
-                                                    <div class="caption">From: <strong id="slider-range-value1" class="text-brand">${{ min_max_price.price__min|floatformat:2 }}</strong></div>
-                                                    <div class="caption">To: <strong id="slider-range-value2" class="text-brand">${{ min_max_price.price__max|floatformat:2 }}</strong></div>
+                                                    <div class="caption">From: <strong id="slider-range-value1" class="text-brand">{{currency_currency}}{{ min_max_price.price__min|floatformat:2 }}</strong></div>
+                                                    <div class="caption">To: <strong id="slider-range-value2" class="text-brand">{{currency_currency}}{{ min_max_price.price__max|floatformat:2 }}</strong></div>
                                                 </div>
                                                 <input type="number"  name="" value="{{ min_max_price.price__min|floatformat:2 }}" id="max_price" min="{{ min_max_price.price__min }}" max="{{ min_max_price.price__max }}" placeholder="Current Price" onkeyup="range.value=this.value">
                                             </div>
@@ -210,15 +210,11 @@
                                     </div>
                                     <div class="product-card-bottom">
                                         <div class="product-price">
-                                            <span>{{ current_currency }}
-                                                {% with price=converted_product_prices|get_item:p.id %}
-                                                    {{ price|floatformat:2|default:"N/A" }}
-                                                {% endwith %}   
+                                            <span>{{ currency_currency }}
+                                                {% with price=converted_product_prices|get_item:p.id %}{{ price|floatformat:2|default:p.price }}{% endwith %}   
                                             </span>
-                                            <span class="old-price">{{ current_currency }} 
-                                                {% with price=converted_old_price|get_item:p.id %}
-                                                    {{ price|floatformat:2|default:"N/A" }}
-                                                {% endwith %}
+                                            <span class="old-price">{{ currency_currency }} 
+                                                {% with price=converted_old_price|get_item:p.id %}{{ price|floatformat:2|default:p.price }}{% endwith %}
                                             </span>
                                         </div>
                                         <div class="add-cart">

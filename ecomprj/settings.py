@@ -78,7 +78,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.LocationMiddleware',
-    'core.middleware.CurrencyMiddleware',
 ]
 
 ROOT_URLCONF = 'ecomprj.urls'
@@ -284,4 +283,4 @@ if not GOOGLE_OAUTH_CLIENT_ID:
 SECURE_REFERRER_POLICY = env('SECURE_REFERRER_POLICY')
 SECURE_CROSS_ORIGIN_OPENER_POLICY = env('SECURE_CROSS_ORIGIN_OPENER_POLICY')
 
-CURRENCYFREAKS_API_KEY = '1fdb7a2222b449778252d97f7aed942a'
+CURRENCYFREAKS_API_KEY = '227a486c09c7430d8744a449ecfa5fa9'

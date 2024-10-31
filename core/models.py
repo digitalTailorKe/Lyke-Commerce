@@ -15,14 +15,9 @@ STATUS_CHOICE = (
 
 PAYMENT_CHOICE = (
     ("draft", "Draft"),
-    ("pending", "Pending"),
-    ("processing", "Processing"),
-    ("onhold", "Onhold"),
     ("completed", "Completed"),
     ("failed", "Failed"),
     ("cancelled", "Cancelled"),
-    ("refunded", "Refunded"),
-    ("paid-partially", "Paid partially"),
     ("over-pay", "Over pay"),
     ("failed", "Failed"),
 )
@@ -346,3 +341,20 @@ class DealOfTheDay(models.Model):
         Calculate the discounted price based on the deal percentage.
         """
         return self.product.price - (self.product.price * (self.discount_percentage / 100))
+    
+class Currency(models.Model):
+    name = models.CharField(max_length=50)
+    code = models.CharField(max_length=3, unique=True)
+    symbol = models.CharField(max_length=5)
+    exchange_rate_to_usd = models.DecimalField(max_digits=10, decimal_places=4)  # Assume base currency is USD
+
+    def __str__(self):
+        return self.name
+
+class Country(models.Model):
+    name = models.CharField(max_length=100)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+

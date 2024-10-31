@@ -240,10 +240,10 @@
                                                         <div class="product-card-bottom">
                                                             <div class="product-price">
                                                                 <span>{{ current_currency }}
-                                                                    {% with price=converted_product_prices|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}   
+                                                                    {% with price=converted_product_prices|get_item:p.id %}{{ price|floatformat:2|default:p.price }}{% endwith %}   
                                                                 </span>
                                                                 <span class="old-price">{{ current_currency }} 
-                                                                    {% with price=converted_old_price|get_item:p.id %}{{ price|floatformat:2|default:"N/A" }}{% endwith %}
+                                                                    {% with price=converted_old_price|get_item:p.id %}{{ price|floatformat:2|default:p.price }}{% endwith %}
                                                                 </span>
                                                             </div>
                                                             <div class="add-cart">
@@ -414,10 +414,15 @@
                                             <div>
                                                 <span class="font-small text-muted">By <a href="{% url 'core:vendor-detail' deal.product.vendor.id %}">{{ deal.product.vendor.title }}</a></span>
                                             </div>
+                                            
                                             <div class="product-card-bottom">
                                                 <div class="product-price">
-                                                    <span>${{ deal.get_discounted_price }}</span>
-                                                    <span class="old-price">${{ deal.product.price }}</span>
+                                                    <span>{{ current_currency }}
+                                                        {% with price=converted_deal_prices|get_item:deal.product.id %}{{ price|floatformat:2|default:deal.get_discounted_price }}{% endwith %}
+                                                    </span>
+                                                    <span class="old-price">{{ current_currency }}
+                                                        {% with price=converted_deal_prices|get_item:deal.product.id %}{{ price|floatformat:2|default:deal.product.price }}{% endwith %}
+                                                    </span>
                                                 </div>
                                                 <div class="bottom-action">
 
@@ -548,42 +553,20 @@
                         <!-- Product sidebar Widget -->
                         <div class="sidebar-widget product-sidebar mb-30 p-30 bg-grey border-radius-10">
                             <h5 class="section-title style-1 mb-30">New products</h5>
+                            {% for product in new_products %}
                             <div class="single-post clearfix">
                                 <div class="image">
-                                    <img src="{% static 'assets/imgs/shop/thumbnail-3.jpg' %}" alt="#" />
+                                    <img src="{{ product.image.url }}" alt="{{ product.title }}"  />  <!-- Update this according to your model -->
                                 </div>
                                 <div class="content pt-10">
-                                    <h5><a href="shop-product-detail.html">Chen Cardigan</a></h5>
-                                    <p class="price mb-0 mt-5">$99.50</p>
+                                    <h5 style="font-size: 15px;"><a href="{% url 'core:product-detail' product.pid %}">{{ product.title }}</a></h5>  <!-- Adjust the URL as needed -->
+                                    <p class="price mb-0 mt-5">{{current_currency}}{{ product.price }}</p>  <!-- Adjust according to your model -->
                                     <div class="product-rate">
-                                        <div class="product-rating" style="width: 90%"></div>
+                                        <div class="product-rating" style="width: {{ product.rating }}%"></div>  <!-- Assuming you have a rating field -->
                                     </div>
                                 </div>
                             </div>
-                            <div class="single-post clearfix">
-                                <div class="image">
-                                    <img src="{% static 'assets/imgs/shop/thumbnail-4.jpg' %}" alt="#" />
-                                </div>
-                                <div class="content pt-10">
-                                    <h6><a href="shop-product-detail.html">Chen Sweater</a></h6>
-                                    <p class="price mb-0 mt-5">$89.50</p>
-                                    <div class="product-rate">
-                                        <div class="product-rating" style="width: 80%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="single-post clearfix">
-                                <div class="image">
-                                    <img src="{% static 'assets/imgs/shop/thumbnail-5.jpg' %}" alt="#" />
-                                </div>
-                                <div class="content pt-10">
-                                    <h6><a href="shop-product-detail.html">Colorful Jacket</a></h6>
-                                    <p class="price mb-0 mt-5">$25</p>
-                                    <div class="product-rate">
-                                        <div class="product-rating" style="width: 60%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
                         <div class="banner-img wow fadeIn mb-lg-0 animated d-lg-block d-none">
                             <img src="{% static 'assets/imgs/banner/banner-11.png' %}" alt="" />

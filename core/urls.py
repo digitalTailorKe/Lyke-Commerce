@@ -118,6 +118,7 @@ urlpatterns = [
     path('validation/', valid, name="valid"),
     path("lyke/confirmation", views.confirm, name="confirm"),
     path("confirmation/email", views.send_payment_email_view, name="order_confirmation"),
-    path("sms/callback", views.sms_delivery_callback, name="sms_callback" )
-    
+    path("sms/callback", views.sms_delivery_callback, name="sms_callback" ),
+    path('check-order-status/<str:oid>/', views.check_order_status, name='check_order_status'),
+    path('set_currency/', views.set_currency, name='set_currency')
 ]
