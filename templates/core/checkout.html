@@ -145,41 +145,8 @@
                         <!--  Mpesa loader -->
 
                         <!-- Add Loader Element (initially hidden) -->
-                        <div id="loader" class="loader-container">
-                            <div class="loader"></div>
-                            <p id="countdown-text" style="font-size: 30px; font-weight: 700;">Checking payment status in <span id="countdown">30</span> seconds...</p>
-                        </div>
-                        <!--- modal -->
-
-                        <div class="modal fade" id="Mpesamodal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-bs-backdrop="static">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <!-- Modal Header -->
-                                    <div class="modal-header bg-success text-white">
-                                        <h5 class="modal-title" id="exampleModalCenterTitle">M-Pesa Payment</h5>
-                                        <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                        
-                                    <!-- Modal Body with Form -->
-                                    <div class="modal-body p-4">
-                                        <form id="mpesaPaymentForm" name="mpesa_form" >
-                                            {{ mpesa_form.as_p }}
-                                            
-                                            <!-- Submit Button -->
-                                            <div class="d-grid">
-                                                <button type="submit" class="btn btn-success btn-lg">Pay Now</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                        
-                                    <!-- Modal Footer -->
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
+                    
+                        <!--- modal -->                        
             </div>
         </div> 
     </div>
@@ -195,6 +162,7 @@
         
         // Submit the form via AJAX or perform a direct POST
         $('#mpesaPaymentForm').submit();  // Submit the form programmatically
+        console.log("{{order.oid}}", "Foind" );
         
         // Redirect to the confirmation page
         window.location.href = `/confirm-payment/{{ order.oid }}/`;

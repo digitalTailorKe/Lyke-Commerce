@@ -10,8 +10,6 @@ class ProductReviewForm(forms.ModelForm):
         model = ProductReview
         fields = ['review', 'rating']
         
-from django import forms
-
 class MpesaPaymentForm(forms.Form):
     phone_number = forms.CharField(
         max_length=13, 

@@ -298,7 +298,7 @@
                                 <div class="search-location">
                                     <form method="POST" action="{% url 'core:set_currency' %}" id="currency-form">
                                         <!-- Country Dropdown -->
-                                        <select id="country-select" onchange="setCurrency(this)">
+                                        <select class="select-active" id="country-select" onchange="setCurrency(this)">
                                             <option value="">{{ user_country|default:"Your Location" }}</option>
                                             {% for country in countries %}
                                                 <option value="{{ country }}" {% if country == user_country %}selected{% endif %}>{{ country }}</option>
@@ -607,12 +607,12 @@
                     <nav>
                         <ul class="mobile-menu font-heading">
                             <li class="menu-item-has-children">
-                                <a href="index.html">Home</a>
+                                <a href="{% url 'core:index' %}">Home</a>
                                
                             </li>
                             <li class="menu-item-has-children">
-                                <a href="shop-grid-right.html">shop</a>
-                                <ul class="dropdown">
+                                <a href="{% url 'core:product-list' %}">shop</a>
+                                <!-- <ul class="dropdown">
                                     <li><a href="shop-grid-right.html">Shop Grid – Right Sidebar</a></li>
                                     <li><a href="shop-grid-left.html">Shop Grid – Left Sidebar</a></li>
                                     <li><a href="shop-list-right.html">Shop List – Right Sidebar</a></li>
@@ -643,52 +643,52 @@
                                             <li><a href="shop-invoice-6.html">Shop Invoice 6</a></li>
                                         </ul>
                                     </li>
-                                </ul>
+                                </ul> -->
                             </li>
                             <li class="menu-item-has-children">
-                                <a href="#">Vendors</a>
+                                <a href="{% url 'core:vendor-list' %}">Vendors</a>
                                 {% for vendor in vendors %}
                                 <ul class="dropdown">
-                                    <li><a href="vendors-grid.html">{{ vendor.title }}</a></li>
+                                    <li><a href="{% url 'core:vendor-detail' vendor.vid %}">{{ vendor.title }}</a></li>
                                 </ul>
                                 {% endfor %}
                             </li>
                             <li class="menu-item-has-children">
                                 <a href="#">Mega menu</a>
                                 <ul class="mega-menu dropdown">
-                                            <li class="sub-mega-menu sub-mega-menu-width-22">
-                                                <a class="menu-title" href="#">Analgesics (Pain Relievers)</a>
-                                                <ul>
-                                                    <li><a href="shop-product-right.html">Nonsteroidal Anti-Inflammatory </a></li>
-                                                    <li><a href="shop-product-right.html">Opioids</a></li>
-                                                    <li><a href="shop-product-right.html">Acetaminophen</a></li>
-                                                    <li><a href="shop-product-right.html">Morphine</a></li>
-                                                    <li><a href="shop-product-right.html">Codeine</a></li>
-                                                    <li><a href="shop-product-right.html">Oxycodone</a></li>
-                                                    
-                                                </ul>
-                                            </li>
-                                            <li class="sub-mega-menu sub-mega-menu-width-22">
-                                                <a class="menu-title" href="#">Antibiotics</a>
-                                                <ul>
-                                                    <li><a href="shop-product-right.html">Penicillins</a></li>
-                                                    <li><a href="shop-product-right.html">Macrolides</a></li>
-                                                    <li><a href="shop-product-right.html">Fluoroquinolones</a></li>
-                                                    <li><a href="shop-product-right.html">Cephalosporins</a></li>
-                                                    
-                                                </ul>
-                                            </li>
-                                            <li class="sub-mega-menu sub-mega-menu-width-22">
-                                                <a class="menu-title" href="#">Antidepressants</a>
-                                                <ul>
-                                                    <li><a href="shop-product-right.html">SSRIs</a></li>
-                                                    <li><a href="shop-product-right.html">Tricyclic Antidepressants</a></li>
-                                                    <li><a href="shop-product-right.html">SNRIs</a></li>
-                                                    <li><a href="shop-product-right.html">Venlafaxine</a></li>
-                                                    <li><a href="shop-product-right.html">Duloxetine</a></li>
-                                                    <li><a href="shop-product-right.html">Ceftriaxone</a></li>
-                                                </ul>
-                                            </li>
+                                    <li class="sub-mega-menu sub-mega-menu-width-22">
+                                        <a class="menu-title" href="#">Analgesics (Pain Relievers)</a>
+                                        <ul>
+                                            <li><a href="{% url 'core:tags' 'nonsteroidal-anti-inflammatory' %}">Nonsteroidal Anti-Inflammatory </a></li>
+                                            <li><a href="{% url 'core:tags' 'opioids' %}">Opioids</a></li>
+                                            <li><a href="{% url 'core:tags' 'acetaminophen' %}">Acetaminophen</a></li>
+                                            <li><a href="{% url 'core:tags' 'morphine' %}">Morphine</a></li>
+                                            <li><a href="{% url 'core:tags' 'codeine' %}">Codeine</a></li>
+                                            <li><a href="{% url 'core:tags' 'oxycodone' %}">Oxycodone</a></li>
+                                            
+                                        </ul>
+                                    </li>
+                                    <li class="sub-mega-menu sub-mega-menu-width-22">
+                                        <a class="menu-title" href="#">Antibiotics</a>
+                                        <ul>
+                                            <li><a href="{% url 'core:tags' 'penicillins' %}">Penicillins</a></li>
+                                            <li><a href="{% url 'core:tags' 'macrolides' %}">Macrolides</a></li>
+                                            <li><a href="{% url 'core:tags' 'fluoroquinolones' %}">Fluoroquinolones</a></li>
+                                            <li><a href="{% url 'core:tags' 'cephalosporins' %}">Cephalosporins</a></li>
+                                            
+                                        </ul>
+                                    </li>
+                                    <li class="sub-mega-menu sub-mega-menu-width-22">
+                                        <a class="menu-title" href="#">Antidepressants</a>
+                                        <ul>
+                                            <li><a href="{% url 'core:tags' 'ssris' %}">SSRIs</a></li>
+                                            <li><a href="{% url 'core:tags' 'tricyclic-antidepressants' %}">Tricyclic Antidepressants</a></li>
+                                            <li><a href="{% url 'core:tags' 'snris' %}">SNRIs</a></li>
+                                            <li><a href="{% url 'core:tags' 'venlafaxine' %}">Venlafaxine</a></li>
+                                            <li><a href="{% url 'core:tags' 'duloxetine' %}">Duloxetine</a></li>
+                                            <li><a href="{% url 'core:tags' 'ceftriaxone' %}">Ceftriaxone</a></li>
+                                        </ul>
+                                    </li>
                                             <li class="sub-mega-menu sub-mega-menu-width-34">
                                                 <div class="menu-banner-wrap">
                                                     <a href="shop-product-right.html"><img src="{% static 'assets/imgs/banner/banner-menu.png' %}" alt="Lyke" /></a>
@@ -719,26 +719,18 @@
                             <li class="menu-item-has-children">
                                 <a href="#">Pages</a>
                                 <ul class="dropdown">
-                                    <li><a href="page-about.html">About Us</a></li>
-                                    <li><a href="page-contact.html">Contact</a></li>
-                                    <li><a href="page-account.html">My Account</a></li>
-                                    <li><a href="page-login.html">Login</a></li>
-                                    <li><a href="page-register.html">Register</a></li>
-                                    <li><a href="page-forgot-password.html">Forgot password</a></li>
-                                    <li><a href="page-reset-password.html">Reset password</a></li>
-                                    <li><a href="page-purchase-guide.html">Purchase Guide</a></li>
-                                    <li><a href="page-privacy-policy.html">Privacy Policy</a></li>
-                                    <li><a href="page-terms.html">Terms of Service</a></li>
-                                    <li><a href="page-404.html">404 Page</a></li>
+                                    <li><a href="{% url 'core:about_us' %}">About Us</a></li>
+                                    <li><a href="{% url 'core:contact' %}">Contact</a></li>
+                                    <li><a href="{% url 'core:dashboard' %}">My Dashboard</a></li>
+                                    <li><a href="{% url 'core:purchase_guide' %}">Purchase Guide</a></li>
+                                    <li><a href="{% url 'core:privacy_policy' %}">Privacy Policy</a></li>
+                                    <li><a href="{% url 'core:terms_of_service' %}">Terms of Service</a></li>
                                 </ul>
                             </li>
                             <li class="menu-item-has-children">
                                 <a href="#">Language</a>
                                 <ul class="dropdown">
                                     <li><a href="#">English</a></li>
-                                    <li><a href="#">French</a></li>
-                                    <li><a href="#">German</a></li>
-                                    <li><a href="#">Spanish</a></li>
                                 </ul>
                             </li>
                         </ul>

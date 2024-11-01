@@ -1690,6 +1690,7 @@ def track_order(request):
     return render(request, 'core/order_tracking.html')
 
 def confirm_payment(request, oid):
+    
     cart_order = CartOrder.objects.get(oid=oid)
     
     initial_data = {
@@ -1705,7 +1706,7 @@ def confirm_payment(request, oid):
             print("mpesa_running")
             response = lipa_na_mpesa_online(request)
             print(response)
-            return redirect("core:payment-completed", cart_order.id)
+            return redirect("core:payment-completed", cart_order.oid)
             
     
     context = {
