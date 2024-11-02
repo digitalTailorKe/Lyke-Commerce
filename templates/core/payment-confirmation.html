@@ -12,7 +12,7 @@
                     <ul class="list-unstyled">
                         <li><strong>Order number:</strong> {{ cart_order.oid }}</li>
                         <li><strong>Date:</strong> {{ cart_order.order_date|date:"F d, Y" }}</li>
-                        <li><strong>Total:</strong> KSh {{ cart_order.price }}</li>
+                        <li><strong>Total:</strong> KSh {{ price }}</li>
                         <li><strong>Payment method:</strong> Mpesa Express</li>
                     </ul>
                 </div>
@@ -79,7 +79,7 @@
                             <li>Select "Pay Bill".</li>
                             <li>Enter Paybill No. <strong>4029469</strong>.</li>
                             <li>Enter account no as <strong>{{ cart_order.oid }}</strong>.</li>
-                            <li>Enter amount as <strong>{{ cart_order.price }}</strong>.</li>
+                            <li>Enter amount as <strong>{{ price }}</strong>.</li>
                             <li>Enter your M-PESA PIN and press "OK".</li>
                         </ol>
                     </div>

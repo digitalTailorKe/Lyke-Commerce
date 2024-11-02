@@ -12,8 +12,9 @@ from django.shortcuts import redirect, render, get_object_or_404
 from requests import session
 from requests.auth import HTTPBasicAuth
 import requests
+from core.utils import convert_prices
 from taggit.models import Tag
-from core.models import Country, Coupon, DealOfTheDay, MpesaTransaction, Product, Category, ProductComparison, Vendor, CartOrder, CartOrderProducts, ProductImages, ProductReview, wishlist_model, Address
+from core.models import Country, Coupon, Currency, DealOfTheDay, MpesaTransaction, Product, Category, ProductComparison, Vendor, CartOrder, CartOrderProducts, ProductImages, ProductReview, wishlist_model, Address
 from userauths.models import ContactUs, Profile
 from core.forms import ProductReviewForm, MpesaPaymentForm
 from django.template.loader import render_to_string
@@ -79,27 +80,14 @@ def index(request):
 
     # Retrieve the already converted prices from the session
     converted_product_prices = request.session.get('converted_product_prices', {})
-    converted_old_price = request.session.get('converted_old_price', {})
+    converted_old_prices = request.session.get('converted_old_prices', {})
 
-    for product in products:
-        # Convert the current product price and store it
-        converted_price = product.price * current_currency_rate
-        converted_old_price_value = product.old_price * current_currency_rate if product.old_price else None
-
-        # Store the converted prices in the dictionary (or session, depending on the need)
-        converted_product_prices[product.id] = float(round(converted_price, 2))
-        if converted_old_price_value:
-            converted_old_price[product.id] = float(round(converted_old_price_value, 2))
-
-    # Store the converted prices in the session to use them later if necessary
-    request.session['converted_product_prices'] = converted_product_prices
-    request.session['converted_old_price'] = converted_old_price
-
-    print(converted_product_prices, 'converted product price')
-    print(converted_old_price, 'converted old price')
+    converted_product_prices, converted_old_prices = convert_prices(request, products)
 
 
     print(converted_product_prices, "session products")
+    print(converted_old_prices, "session old products")
+
 
     current_time = timezone.now()
     deals = DealOfTheDay.objects.filter(start_time__lte=current_time, end_time__gte=current_time, is_active=True)
@@ -123,7 +111,7 @@ def index(request):
         "user_country": user_country,
         "current_currency": current_currency,
         "converted_product_prices": converted_product_prices,
-        "converted_old_price": converted_old_price,
+        "converted_old_prices": converted_old_prices,
         "countries": countries,
         "vendors": vendors,
         "new_products": new_products
@@ -151,6 +139,11 @@ def set_currency(request):
         return JsonResponse({"success": "Currency set to default (USD)"})
 
 def product_list_view(request):
+
+    if 'country' in request.POST:
+      country_name = request.POST.get('country')
+      print(country_name, 'Counrty in request')
+      set_currency(request, country_name=country_name)
     
     products = Product.objects.filter(product_status="published").order_by("-id")
     current_time = timezone.now()
@@ -184,6 +177,12 @@ def product_list_view(request):
 
 
 def category_list_view(request):
+
+    if 'country' in request.POST:
+      country_name = request.POST.get('country')
+      print(country_name, 'Counrty in request')
+      set_currency(request, country_name=country_name)
+
     categories = Category.objects.all()
 
     context = {
@@ -214,6 +213,12 @@ def category_product_list__view(request, cid):
 
 
 def vendor_list_view(request):
+
+    if 'country' in request.POST:
+      country_name = request.POST.get('country')
+      print(country_name, 'Counrty in request')
+      set_currency(request, country_name=country_name)
+    
     vendors = Vendor.objects.all()
     context = {
         "vendors": vendors,
@@ -433,6 +438,11 @@ def cart_view(request):
     current_currency = request.session.get('user_currency_code', 'USD')
     countries = getattr(request, 'countries', [])
     print(countries, "country data")
+
+    if 'country' in request.POST:
+      country_name = request.POST.get('country')
+      print(country_name, 'Counrty in request')
+      set_currency(request, country_name=country_name)
 
     if 'cart_data_obj' in request.session:
         
@@ -694,8 +704,7 @@ def checkout(request, oid):
         'amount':  round(order.price), 
         'phone_number': order.phone,  
     }
-    mpesa_form = MpesaPaymentForm(initial=initial_data)
-    print(mpesa_form)
+
     if request.method == "POST":
       if 'code' in request.POST:
         code = request.POST.get("code")
@@ -715,11 +724,7 @@ def checkout(request, oid):
         else:
             messages.error(request, "Coupon Does Not Exists")
         return redirect("core:checkout", order.oid)
-    elif 'mpesa_form' in request.POST:
-        print("Mpesa running")
-        response = lipa_na_mpesa_online(request)
-        print(response)
-        return redirect("core:payment-completed", order.oid)
+
     current_currency = request.session.get('user_currency_code', 'USD')
     countries = getattr(request, 'countries', [])
     print(countries, "country data")
@@ -728,7 +733,6 @@ def checkout(request, oid):
         "order": order,
         "order_items": order_items,
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
-        "mpesa_form": mpesa_form,
         'current_currency': current_currency,
         'countries': countries
     }
@@ -1693,11 +1697,39 @@ def confirm_payment(request, oid):
     
     cart_order = CartOrder.objects.get(oid=oid)
     
+    
+
+    currency_in_session = request.session.get('user_exchange_rate')
+    currency_code_in_session = request.session.get('user_currency_code')
+
+    if currency_code_in_session == 'KES':
+      print(currency_code_in_session, 'kenyan')
+      print(currency_in_session, 'kenyan rate')
+      
+      price = round(cart_order.price)
+    else:
+        print('Not kenyan')
+        print(currency_code_in_session, 'kenyan')
+        get_current_code = Currency.objects.get(code=currency_code_in_session)
+        get_current_rate = get_current_code.exchange_rate_to_usd
+        print(get_current_rate, 'currency usd rate')
+        usd_base = round(cart_order.price) / get_current_rate
+        print(cart_order.price)
+
+        current_kenyan_rate = Currency.objects.get(code='KES')
+        Kenyanrate = current_kenyan_rate.exchange_rate_to_usd
+        converted_amount = Kenyanrate * usd_base 
+
+        print(converted_amount, 'convertion')
+
+        price = round(converted_amount)
+
     initial_data = {
         'order_id': cart_order.oid,
-        'amount':  round(cart_order.price), 
+        'amount':  price, 
         'phone_number': cart_order.phone,  
     }
+    
     mpesa_form = MpesaPaymentForm(initial=initial_data)
     print(initial_data)
     
@@ -1711,7 +1743,8 @@ def confirm_payment(request, oid):
     
     context = {
         "cart_order": cart_order,
-        "mpesa_form": mpesa_form
+        "mpesa_form": mpesa_form,
+        "price": price
     }
     
     return render(request, 'core/payment-confirmation.html',  context)

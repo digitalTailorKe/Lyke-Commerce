@@ -162,7 +162,6 @@
         
         // Submit the form via AJAX or perform a direct POST
         $('#mpesaPaymentForm').submit();  // Submit the form programmatically
-        console.log("{{order.oid}}", "Foind" );
         
         // Redirect to the confirmation page
         window.location.href = `/confirm-payment/{{ order.oid }}/`;
