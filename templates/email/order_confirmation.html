@@ -129,8 +129,8 @@
                                                    <td><img src="{{ product.image }}" alt="{{ product.item }}" /></td>
                                                    <td>{{ product.item }}</td>
                                                    <td>{{ product.qty }}</td>
-                                                   <td>${{ product.price }}</td>
-                                                   <td>${{ product.total }}</td>
+                                                   <td>{{ current_currency }}{{ product.price }}</td>
+                                                   <td>{{ current_currency }}{{ product.total }}</td>
                                                 </tr>
                                                 {% endfor %}
                                              </tbody>
@@ -147,10 +147,10 @@
                                  <table width="100%" style="border-top:2px solid #efefef;border-bottom:2px solid #efefef;">
                                     <tr>
                                        <td style="padding:10px;text-align:right;">
-                                          <p>Subtotal: <strong>${{ order.price }}</strong></p>
-                                          <p>Shipping: <strong>$0.00</strong></p>
-                                          <p>Tax: <strong>$10.00</strong></p>
-                                          <p>Total: <strong>${{ order.paid_amount }}</strong></p>
+                                          <p>Subtotal: <strong>{{ current_currency }}{{ order.price }}</strong></p>
+                                          <p>Shipping: <strong>{{ current_currency }}0.00</strong></p>
+                                          <p>Tax: <strong>{{ current_currency }}10.00</strong></p>
+                                          <p>Total: <strong>{{ current_currency }}{{ order.paid_amount }}</strong></p>
                                        </td>
                                     </tr>
                                  </table>

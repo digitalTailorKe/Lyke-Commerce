@@ -1458,6 +1458,11 @@ def show_and_delete_messages(request):
 def send_payment_confirmation_email(request, to_email, order_id):
 
     order = CartOrder.objects.get(oid=order_id)
+    current_currency = request.session.get('user_currency_code', 'USD')
+    current_currency_rate = Decimal(request.session.get('user_exchange_rate', 1.0))
+
+    print(current_currency, 'index view')
+    print(current_currency_rate, 'index view')
     print(order, "inside email")
     """
     Send a payment confirmation email to the client using Django's email service
@@ -1469,7 +1474,8 @@ def send_payment_confirmation_email(request, to_email, order_id):
 
     # HTML content (email body)
     html_content = render_to_string("email/order_confirmation.html", {
-        'order': order,  # You can pass any variables you want to the template
+        'order': order,
+        'current_currency': current_currency # You can pass any variables you want to the template
     })
 
     # Sending the email with both plain text and HTML versions
@@ -1482,8 +1488,9 @@ def send_payment_confirmation_email(request, to_email, order_id):
         print(f"Failed to send email: {e}")
 
 
-def send_payment_confirmation_mail( to_email, order_id ):
+def send_payment_confirmation_mail(request, to_email, order_id ):
     
+    current_currency = request.session.get('user_currency_code', 'USD')
     order = CartOrder.objects.get(oid=order_id)
     send_sms_after_payment(order.phone,order.oid,order.price)
     print(order, "inside email")
@@ -1497,7 +1504,8 @@ def send_payment_confirmation_mail( to_email, order_id ):
 
     # HTML content (email body)
     html_content = render_to_string("email/payment_confirmation.html", {
-        'order': order,  # You can pass any variables you want to the template
+        'order': order,
+        'current_currency': current_currency  # You can pass any variables you want to the template
     })
 
     # Sending the email with both plain text and HTML versions
