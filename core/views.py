@@ -471,6 +471,7 @@ def cart_view(request):
 
 
 def delete_item_from_cart(request):
+    current_currency = request.session.get('user_currency_code', 'USD')
     product_id = str(request.GET['id'])
     if 'cart_data_obj' in request.session:
         if product_id in request.session['cart_data_obj']:
@@ -483,13 +484,14 @@ def delete_item_from_cart(request):
         for p_id, item in request.session['cart_data_obj'].items():
             cart_total_amount += int(item['qty']) * float(item['price'])
 
-    context = render_to_string("core/async/cart-list.html", {"cart_data":request.session['cart_data_obj'], 'totalcartitems': len(request.session['cart_data_obj']), 'cart_total_amount':cart_total_amount})
+    context = render_to_string("core/async/cart-list.html", {  'current_currency': current_currency,"cart_data":request.session['cart_data_obj'], 'totalcartitems': len(request.session['cart_data_obj']), 'cart_total_amount':cart_total_amount})
     return JsonResponse({"data": context, 'totalcartitems': len(request.session['cart_data_obj'])})
 
 
 def update_cart(request):
     product_id = str(request.GET['id'])
     product_qty = request.GET['qty']
+    current_currency = request.session.get('user_currency_code', 'USD')
 
     if 'cart_data_obj' in request.session:
         if product_id in request.session['cart_data_obj']:
@@ -502,7 +504,7 @@ def update_cart(request):
         for p_id, item in request.session['cart_data_obj'].items():
             cart_total_amount += int(item['qty']) * float(item['price'])
 
-    context = render_to_string("core/async/cart-list.html", {"cart_data":request.session['cart_data_obj'], 'totalcartitems': len(request.session['cart_data_obj']), 'cart_total_amount':cart_total_amount})
+    context = render_to_string("core/async/cart-list.html", {"current_currency":current_currency,"cart_data":request.session['cart_data_obj'], 'totalcartitems': len(request.session['cart_data_obj']), 'cart_total_amount':cart_total_amount})
     return JsonResponse({"cart_data":request.session['cart_data_obj'],"data": context, 'totalcartitems': len(request.session['cart_data_obj'])})
 
 @csrf_exempt
