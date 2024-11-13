@@ -434,7 +434,7 @@
                                                     <input type="hidden" class="product-title-{{ deal.product.id }}" value="{{ deal.product.title }}">
                                                     <input type="hidden" class="current-product-price-{{ deal.product.id }}" value="{{ deal.get_discounted_price}}">
                                                     
-                                                    <button  onclick="addToCart(1, '{{ deal.product.id }}','{{ deal.product.pid }}','{{ deal.product.image.url }}','{{ deal.product.title }}','{{deal.get_discounted_price}}' )" data-index="{{ deal.product.id }}" style="border: none;" id="add-to-cart-btn">
+                                                    <button  onclick="addToCart(1, '{{ deal.product.id }}','{{ deal.product.pid }}','{{ deal.product.image.url }}','{{ deal.product.title }}','{{deal.get_discounted_price}}' )" data-index="{{ deal.product.id }}" class="add add-to-cart-btn" style="border: none; padding: 16%; border-radius: 10%; background-color: #DEF9EC;" id="add-to-cart-btn">
                                                         {% if deal.product.id|stringformat:"s" in cart_data %}
                                                             <i class='fas fa-check-circle'></i>
                                                         {% else %}
