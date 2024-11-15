@@ -746,11 +746,13 @@ def checkout(request, oid):
 # @login_required
 def payment_completed_view(request, oid):
     order = CartOrder.objects.get(oid=oid)
-
+    print(order)
+    print(oid)
     if order.paid_status == False:
         order.paid_status = True
         order.save()
-    send_payment_confirmation_mail(order.email,order.oid)
+
+    send_payment_confirmation_mail(request, order.email, order.oid)
         
     context = {
         "order": order,
@@ -1818,10 +1820,13 @@ def get_currency_rate(request, country_name):
         print(f"CurrencyFreaks API Error: {e}")
         return JsonResponse({'success': False, 'message': 'API request failed'}, status=500)
 
+@csrf_exempt
 def check_order_status(request, oid):
     try:
         # Fetch the order by its order ID (oid)
         order = get_object_or_404(CartOrder, oid=oid)
+        print("order found")
+        print("order found", order)
 
         # Perform any necessary checks here (e.g., whether the order is complete)
         # Assuming there's a field `is_paid` in the Order model to check payment status

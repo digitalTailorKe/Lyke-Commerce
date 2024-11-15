@@ -103,18 +103,19 @@
             // Disable the button to prevent multiple clicks
             var $completeOrderButton = $(this);
             $completeOrderButton.prop('disabled', true).text('Completing Order...');
+            $('#paymentErrorAlert').addClass('d-none');
 
             // Send the AJAX request to check the order status
             $.ajax({
                 url: "{% url 'core:check_order_status' cart_order.oid %}",  // Replace with your actual backend URL
-                type: "GET",  // or POST, depending on your backend method
+                type: "POST",  // or POST, depending on your backend method
                 success: function(response) {
                     if (response.success) {
                         // Redirect to order summary or success page
-                        window.location.href = `/payment-completed/{{ cart_order.oid }}/`;  // Replace with your success page URL
+                        window.location.href = `/payment-completed/{{ cart_order.oid }}/`;
                     } else {
-                        // Handle failure case (e.g., show error message)
-                        alert('Order check failed. Please try again.');
+                        $('#paymentErrorAlert').removeClass('d-none');
+                        alert('Your order has not been paid', response.message) ;
                     }
                     $completeOrderButton.prop('disabled', false).text('Complete');
                 },
