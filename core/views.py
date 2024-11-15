@@ -1469,7 +1469,7 @@ def send_payment_confirmation_email(request, to_email, order_id):
     """
     Send a payment confirmation email to the client using Django's email service
     """
-    subject = "Payment Confirmation"
+    subject = "Order Confirmation"
     from_email = settings.DEFAULT_FROM_EMAIL
     print(to_email)
     print(f"Sending email from: {from_email}")

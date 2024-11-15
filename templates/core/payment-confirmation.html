@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="container mt-5">
-    <div class="row">
+    <div class="row container">
         <!-- Left Column: Order Summary -->
         <div class="col-md-6">
             <div class="card mb-4">
@@ -51,7 +51,7 @@
                   <h5 class="modal-title" id="paymentProcessingModalLabel">Processing Payment</h5>
                 </div>
                 <div class="modal-body">
-                  We are processing your order. Please make sure you have <strong> $ {{ cart_order.price }}</strong> in your account. Check out for mpesa prompt on your phone to enter your pin
+                  We are processing your order. Please make sure you have <strong> Ksh {{ cart_order.price }}</strong> in your account. Check out for mpesa prompt on your phone to enter your pin
                 </div>
                 <div class="modal-footer">
                                   <!-- Countdown Display beside the button -->
@@ -63,11 +63,11 @@
 
         <!-- Right Column: Payment Instructions -->
         <div class="col-md-6">
-            <div id="paymentSuccessAlert" class="d-none" style="background-color: #3BB77E; border: 1px solid #29A56C;">
+            <div id="paymentSuccessAlert" class="d-none mb-4 p-4  rounded-3" style="background-color: #3BB77E; border: 1px solid #29A56C; color: #FFF8DC;">
                 Your order has been paid successfully!
             </div>
 
-             <div id="paymentErrorAlert" class="d-none" style="background-color: #FFF8DC; border: 1px solid #FFD700;">
+             <div id="paymentErrorAlert" class="mb-4 d-none" style="background-color: #FFF8DC; border: 1px solid #FFD700;">
                 <div class="d-flex align-items-start">
                     <div class="me-3">
                         <span style="font-size: 24px;">⚠️</span>
@@ -86,8 +86,8 @@
                 </div>
             </div>
 
-            <div>
-                <button type="button" id="completeOrderButton" class="btn btn-success btn-lg">Complete</button>
+            <div style="display: flex; align-items: center; justify-content: center;" class="mb-2">
+                <button type="button" id="completeOrderButton" class="btn btn-success btn-lg ">Complete</button>
             </div>
         </div>
     </div>
