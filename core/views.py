@@ -700,7 +700,6 @@ def create_checkout_session(request, oid):
 def checkout(request, oid):
     order = CartOrder.objects.get(oid=oid)
     order_items = CartOrderProducts.objects.filter(order=order)
-    
     initial_data = {
         'order_id': order.oid,
         'amount':  round(order.price), 
@@ -1708,9 +1707,6 @@ def track_order(request):
 def confirm_payment(request, oid):
     
     cart_order = CartOrder.objects.get(oid=oid)
-    
-    
-
     currency_in_session = request.session.get('user_exchange_rate')
     currency_code_in_session = request.session.get('user_currency_code')
 
@@ -1719,6 +1715,9 @@ def confirm_payment(request, oid):
       print(currency_in_session, 'kenyan rate')
       
       price = round(cart_order.price)
+      if price >= 250000:
+           messages.warning(request, f"You order is at maximum Mpesa transaction limit. Order Price: KES {price}. Please us a diffrent payment method")
+           return redirect("core:checkout", cart_order.oid)
     else:
         print('Not kenyan')
         print(currency_code_in_session, 'kenyan')
@@ -1736,6 +1735,9 @@ def confirm_payment(request, oid):
 
         price = round(converted_amount)
 
+        if price >= 250000:
+           messages.warning(request, f"You order is at maximum Mpesa transaction limit. Order Price: KES {price}. Please us a diffrent payment method")
+           return redirect("core:checkout", cart_order.oid)
     initial_data = {
         'order_id': cart_order.oid,
         'amount':  price, 
